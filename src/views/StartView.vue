@@ -10,6 +10,8 @@ const router = useRouter()
 const player = usePlayerStore()
 const progress = useProgressStore()
 
+const baseUrl = import.meta.env.BASE_URL
+
 onMounted(() => {
   player.loadFromStorage()
   progress.loadFromStorage()
@@ -84,7 +86,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   <div class="relative min-h-screen overflow-hidden bg-slate-950">
     <!-- 背景 -->
     <div
-      class="absolute inset-0 animate-bgSlowZoom bg-[url('/images/scene/normal.png')] bg-cover bg-center saturate-95"
+      class="absolute inset-0 animate-bgSlowZoom bg-cover bg-center saturate-95"
+      :style="{ backgroundImage: `url(${baseUrl}images/scene/normal.png)` }"
     />
 
     <!-- 暗角遮罩 - 手機版整體變暗，桌面版左側較暗 -->
@@ -99,7 +102,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
     <div class="absolute inset-x-0 bottom-[220px] top-0 flex items-end justify-center overflow-hidden md:bottom-0 md:block" aria-hidden="true">
       <img
         class="pointer-events-none h-auto w-[85vw] max-w-[380px] object-contain object-bottom opacity-80 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] motion-safe:animate-coachBreath md:absolute md:bottom-0 md:right-0 md:h-[85vh] md:max-h-[900px] md:w-auto md:max-w-none md:translate-x-[5%] md:opacity-100"
-        src="/images/coach/normal.png"
+        :src="`${baseUrl}images/coach/normal.png`"
         alt="教練"
       />
     </div>
@@ -110,7 +113,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
         <!-- Logo 區塊 -->
         <div class="relative mb-6 inline-block md:mb-10">
           <img
-            src="/images/logo.png"
+            :src="`${baseUrl}images/logo.png`"
             alt="新人後端生存指南"
             class="block w-[min(320px,80vw)] select-none drop-shadow-[0_18px_60px_rgba(255,255,255,0.14)] md:w-[min(420px,75vw)]"
             draggable="false"

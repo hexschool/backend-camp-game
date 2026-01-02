@@ -32,7 +32,7 @@ onMounted(() => {
 })
 
 // 背景音樂
-const bgm = new Audio('/audio/background.mp3')
+const bgm = new Audio(`${import.meta.env.BASE_URL}audio/background.mp3`)
 bgm.loop = true
 bgm.volume = 0.1
 
@@ -77,7 +77,12 @@ const celebrationNode = computed<CelebrationNode | null>(() => (node.value?.type
 
 const dialogueImage = computed(() => {
   if (node.value?.type === 'dialogue' && node.value.image) {
-    return node.value.image
+    // 處理絕對路徑，加上 base URL
+    const img = node.value.image
+    if (img.startsWith('/')) {
+      return `${import.meta.env.BASE_URL}${img.slice(1)}`
+    }
+    return img
   }
   return null
 })
@@ -197,8 +202,8 @@ function onCelebrationClose() {
   }
 }
 
-const sceneUrl = computed(() => `/images/scene/${node.value?.scene ?? 'normal'}.png`)
-const coachUrl = computed(() => `/images/coach/${node.value?.coachExpression ?? 'normal'}.png`)
+const sceneUrl = computed(() => `${import.meta.env.BASE_URL}images/scene/${node.value?.scene ?? 'normal'}.png`)
+const coachUrl = computed(() => `${import.meta.env.BASE_URL}images/coach/${node.value?.coachExpression ?? 'normal'}.png`)
 
 const speakerLabel = computed(() => {
   if (node.value?.type !== 'dialogue') return '海克絲'
