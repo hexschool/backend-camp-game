@@ -30,8 +30,9 @@ onUnmounted(() => {
 // 動態載入對應的互動簡報元件
 const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> = {
   'git-intro': defineAsyncComponent(() => import('./interactive-slides/GitIntroSlide.vue')),
+  'docker-intro': defineAsyncComponent(() => import('./interactive-slides/DockerIntroSlide.vue')),
+  'architecture-intro': defineAsyncComponent(() => import('./interactive-slides/ArchitectureIntroSlide.vue')),
   // 之後新增更多簡報時，在這裡註冊
-  // 'git-branch': defineAsyncComponent(() => import('./interactive-slides/GitBranchSlide.vue')),
 }
 
 const SlideComponent = computed(() => {

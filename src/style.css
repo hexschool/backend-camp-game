@@ -2,6 +2,19 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer utilities {
+  /* iOS/Android safe area padding for browser bottom navigation bar */
+  .pb-safe-bottom {
+    /*
+     * 使用較大的基本 padding 以應對:
+     * 1. iPhone Home Indicator (~34px)
+     * 2. Chrome/Safari 手機版底部導航列 (~50-80px)
+     * 3. 各種瀏覽器的 URL 欄位縮放行為
+     */
+    padding-bottom: max(5.5rem, env(safe-area-inset-bottom, 0px) + 3rem);
+  }
+}
+
 @layer base {
   :root {
     font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans TC',

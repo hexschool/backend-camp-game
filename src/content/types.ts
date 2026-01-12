@@ -74,7 +74,29 @@ export type InteractiveSlideNode = {
   coachExpression: string
 }
 
-export type ChapterNode = DialogueNode | InputNameNode | SlidesNode | QuizNode | CelebrationNode | InteractiveSlideNode
+// 選擇對話節點 - 讓玩家選擇選項，根據選擇顯示不同回應
+export type ChoiceOption = {
+  id: string
+  label: string
+  /** 選擇後海克絲的回應對話 */
+  response: string
+  /** 回應時的表情 */
+  responseExpression: string
+  /** 是否為正確答案（會影響回應語氣，但不計分） */
+  isCorrect?: boolean
+}
+
+export type ChoiceNode = {
+  type: 'choice'
+  /** 海克絲提出的問題 */
+  prompt: string
+  /** 可選擇的選項 */
+  options: ChoiceOption[]
+  scene: string
+  coachExpression: string
+}
+
+export type ChapterNode = DialogueNode | InputNameNode | SlidesNode | QuizNode | CelebrationNode | InteractiveSlideNode | ChoiceNode
 
 export type ChapterConfig = {
   id: number
