@@ -63,7 +63,18 @@ export type CelebrationNode = {
   coachExpression: string
 }
 
-export type ChapterNode = DialogueNode | InputNameNode | SlidesNode | QuizNode | CelebrationNode
+// 互動式簡報節點 - 用於嵌入自訂的 Vue 互動元件
+export type InteractiveSlideNode = {
+  type: 'interactiveSlide'
+  /** 簡報的唯一識別碼，對應到 src/components/interactive-slides/ 裡的元件名稱 */
+  slideId: string
+  /** 簡報標題（顯示在 header） */
+  title: string
+  scene: string
+  coachExpression: string
+}
+
+export type ChapterNode = DialogueNode | InputNameNode | SlidesNode | QuizNode | CelebrationNode | InteractiveSlideNode
 
 export type ChapterConfig = {
   id: number

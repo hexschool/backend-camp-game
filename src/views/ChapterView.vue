@@ -2,13 +2,14 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getChapter, chapters } from '../content/chapters'
-import type { ChapterNode, InputNameNode, SlidesNode, QuizNode, CelebrationNode } from '../content/types'
+import type { ChapterNode, InputNameNode, SlidesNode, QuizNode, CelebrationNode, InteractiveSlideNode } from '../content/types'
 import { usePlayerStore } from '../stores/player'
 import { useProgressStore } from '../stores/progress'
 import NameInputModal from '../components/NameInputModal.vue'
 import SlidesModal from '../components/SlidesModal.vue'
 import QuizModal from '../components/QuizModal.vue'
 import CelebrationModal from '../components/CelebrationModal.vue'
+import InteractiveSlideModal from '../components/InteractiveSlideModal.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -67,6 +68,7 @@ const showNameModal = computed(() => node.value?.type === 'inputName')
 const showSlidesModal = computed(() => node.value?.type === 'slides')
 const showQuizModal = computed(() => node.value?.type === 'quiz')
 const showCelebrationModal = computed(() => node.value?.type === 'celebration')
+const showInteractiveSlideModal = computed(() => node.value?.type === 'interactiveSlide')
 
 const nameNode = computed<InputNameNode | null>(() =>
   node.value?.type === 'inputName' ? (node.value as InputNameNode) : null,
@@ -74,6 +76,7 @@ const nameNode = computed<InputNameNode | null>(() =>
 const slidesNode = computed<SlidesNode | null>(() => (node.value?.type === 'slides' ? (node.value as SlidesNode) : null))
 const quizNode = computed<QuizNode | null>(() => (node.value?.type === 'quiz' ? (node.value as QuizNode) : null))
 const celebrationNode = computed<CelebrationNode | null>(() => (node.value?.type === 'celebration' ? (node.value as CelebrationNode) : null))
+const interactiveSlideNode = computed<InteractiveSlideNode | null>(() => (node.value?.type === 'interactiveSlide' ? (node.value as InteractiveSlideNode) : null))
 
 const dialogueImage = computed(() => {
   if (node.value?.type === 'dialogue' && node.value.image) {
@@ -174,6 +177,12 @@ function onSlidesClose() {
   enterNode(nodes.value[nextIdx]!)
 }
 
+function onInteractiveSlideClose() {
+  const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
+  progress.setNodeIndex(chapterId.value, nextIdx)
+  enterNode(nodes.value[nextIdx]!)
+}
+
 function onQuizDone() {
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
   progress.setNodeIndex(chapterId.value, nextIdx)
@@ -230,8 +239,8 @@ function fastForward() {
 
 // 鍵盤支援：Enter/空白鍵/方向鍵
 function onKeyDown(e: KeyboardEvent) {
-  // 如果正在輸入名字、看簡報、答題或慶祝畫面，不處理
-  if (showNameModal.value || showSlidesModal.value || showQuizModal.value || showCelebrationModal.value) return
+  // 如果正在輸入名字、看簡報、答題、慶祝畫面或互動簡報，不處理
+  if (showNameModal.value || showSlidesModal.value || showQuizModal.value || showCelebrationModal.value || showInteractiveSlideModal.value) return
 
   if (e.key === 'Enter' || e.key === ' ' || e.key === 'ArrowRight') {
     e.preventDefault()
@@ -295,8 +304,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
     <!-- 中間內容區：flex-1 填滿剩餘空間，使用 justify-end 讓內容靠底部 -->
     <main class="relative z-10 flex flex-1 flex-col justify-end">
-      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration 時隱藏） -->
-      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
+      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide 時隱藏） -->
+      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
         <img
           class="h-full w-auto max-w-[85vw] object-contain object-bottom"
           :src="coachUrl"
@@ -315,8 +324,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
         </div>
       </div>
 
-      <!-- 對話框區域：在底部，內容多時往上長蓋住教練（quiz/slides/celebration 時隱藏） -->
-      <div v-if="!showQuizModal && !showSlidesModal && !showCelebrationModal" class="relative z-20 px-3 pb-6">
+      <!-- 對話框區域：在底部，內容多時往上長蓋住教練（quiz/slides/celebration/interactiveSlide 時隱藏） -->
+      <div v-if="!showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal" class="relative z-20 px-3 pb-6">
         <div class="mx-auto w-full max-w-[1100px] rounded-2xl border border-white/15 bg-slate-950/95 p-4 backdrop-blur">
           <div class="mb-2 inline-flex items-center rounded-full border px-3 py-1 text-sm font-black" :class="speakerTagClass">
             {{ speakerLabel }}
@@ -375,6 +384,13 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       :playerName="player.name || '你'"
       :chapterTitle="celebrationNode.chapterTitle"
       @close="onCelebrationClose"
+    />
+
+    <InteractiveSlideModal
+      v-if="showInteractiveSlideModal && interactiveSlideNode"
+      :slideId="interactiveSlideNode.slideId"
+      :title="interactiveSlideNode.title"
+      @close="onInteractiveSlideClose"
     />
   </div>
 </template>
