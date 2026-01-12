@@ -28,6 +28,12 @@ watch(chapter, (c) => {
   if (!c) router.push({ name: 'start' })
 }, { immediate: true })
 
+// 當章節改變時（例如從第一關進入第二關），重新初始化對話
+watch(chapterId, () => {
+  // 確保在章節切換時啟動第一句對話的打字機效果
+  if (node.value) enterNode(node.value)
+})
+
 onMounted(() => {
   player.loadFromStorage()
   progress.loadFromStorage()
