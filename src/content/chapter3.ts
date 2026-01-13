@@ -11,6 +11,13 @@ const nodes: ChapterNode[] = [
   },
   {
     type: 'dialogue',
+    speaker: '旁白',
+    text: '📋 今日任務文件：https://hackmd.io/PvcRJaaVSpqf4nyGfdg9Ag?view',
+    scene: 'sport',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
     speaker: '你',
     text: '怎麼了？發生什麼事？',
     scene: 'sport',

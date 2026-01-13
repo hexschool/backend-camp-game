@@ -11,6 +11,13 @@ const nodes: ChapterNode[] = [
   },
   {
     type: 'dialogue',
+    speaker: '旁白',
+    text: '📋 今日任務文件：https://hackmd.io/1H8XMmxXSXOGmvL2L70pwQ?view',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
     speaker: '你',
     text: '早安海姐！我昨天回去又把規格書看了一遍，感覺更清楚了。',
     scene: 'meeting',
@@ -84,7 +91,7 @@ const nodes: ChapterNode[] = [
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '光說不練假把式！來，海姐帶你進互動實驗室，親手體驗一下 Git 的魔力。',
+    text: '說再多不如動手做！來，海姐帶你進互動實驗室，親手體驗一下 Git 的魔力。',
     scene: 'meeting',
     coachExpression: 'praise',
   },

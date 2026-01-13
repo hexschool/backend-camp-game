@@ -11,6 +11,13 @@ const nodes: ChapterNode[] = [
   },
   {
     type: 'dialogue',
+    speaker: '旁白',
+    text: '📋 今日任務文件：https://hackmd.io/Pde0vddrRmCAwuTNgv6Hig?view',
+    scene: 'normal',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
     speaker: '海克絲',
     text: '別那麼拘謹，先把這部厚重的筆電放下吧。來，肩膀放鬆，我們聊聊天。',
     scene: 'normal',
@@ -138,7 +145,7 @@ const nodes: ChapterNode[] = [
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '訪客：「我想瀏覽教練列表，以便於了解有哪些專長的教練適合我。」\n會員：「我想購買堂數方案，以便於取得點數來報名喜歡的課程。」\n教練：「我想建立課程，以便於讓學員可以預約我的直播時段。」\n管理員：「我想把一般使用者升級為教練，以便於擴張平台的教學師資。」',
+    text: '訪客：「我想瀏覽教練列表，以便於了解有哪些專長的教練適合我。」\n會員：「我想購買堂數方案，以便於取得堂數來報名喜歡的課程。」\n教練：「我想建立課程，以便於讓學員可以預約我的直播時段。」\n管理員：「我想把一般使用者升級為教練，以便於擴張平台的教學師資。」',
     scene: 'normal',
     coachExpression: 'normal',
   },
@@ -427,22 +434,22 @@ const nodes: ChapterNode[] = [
         prompt: '根據使用者故事，會員如果想了解自己過去買了哪些方案與購買時間，可以使用什麼功能？',
         options: [
           { id: 'a', label: '查看教練詳情' },
-          { id: 'b', label: '查看我的堂數購買紀錄' },
+          { id: 'b', label: '在訂單頁面查看我的堂數購買紀錄' },
           { id: 'c', label: '修改個人資料' },
         ],
         correctOptionId: 'b',
-        explanation: '會員可以透過「查看我的堂數購買紀錄」來了解過去的購買資訊。',
+        explanation: '會員可以透過「訂單頁面」來查看過去的堂數購買紀錄。',
       },
       {
         id: 'q19',
         prompt: '當教練想要掌握自己開設的課程目前的狀態（如：是否已滿額、報名人數），他應該查看什麼？',
         options: [
-          { id: 'a', label: '我的課程列表' },
+          { id: 'a', label: '在課程管理查看' },
           { id: 'b', label: '月營收統計' },
           { id: 'c', label: '技能清單' },
         ],
         correctOptionId: 'a',
-        explanation: '教練透過「我的課程列表」可以查看課程狀態與報名人數。',
+        explanation: '教練透過「課程管理」可以查看課程狀態與報名人數。',
       },
       {
         id: 'q20',
