@@ -332,11 +332,20 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       <!-- 圖片模式：可滾動區域顯示圖片，限制最大高度讓對話框始終可見 -->
       <div v-if="dialogueImage" class="relative z-10 mb-4 max-h-[45vh] flex-1 overflow-y-auto px-4 md:max-h-[55vh]">
         <div class="flex min-h-full items-center justify-center py-4">
-          <img
-            :src="dialogueImage"
-            alt="展示圖片"
-            class="max-h-[40vh] max-w-full rounded-lg border border-white/20 object-contain shadow-2xl md:max-h-[50vh]"
-          />
+          <div class="relative">
+            <img
+              :src="dialogueImage"
+              alt="展示圖片"
+              class="max-h-[40vh] max-w-full rounded-xl border-2 border-white/30 bg-black/50 p-6 object-contain shadow-2xl md:max-h-[50vh]"
+            />
+            <!-- 箭頭引導 -->
+            <div class="absolute -left-12 top-1/2 -translate-y-1/2 text-3xl md:-left-16 md:text-4xl">
+              👉
+            </div>
+            <div class="absolute -left-12 top-1/2 mt-8 -translate-y-1/2 rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-bold text-white shadow-lg md:-left-16">
+              右鍵另存
+            </div>
+          </div>
         </div>
       </div>
 

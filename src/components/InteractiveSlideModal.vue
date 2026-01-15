@@ -32,6 +32,7 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   'git-intro': defineAsyncComponent(() => import('./interactive-slides/GitIntroSlide.vue')),
   'docker-intro': defineAsyncComponent(() => import('./interactive-slides/DockerIntroSlide.vue')),
   'architecture-intro': defineAsyncComponent(() => import('./interactive-slides/ArchitectureIntroSlide.vue')),
+  'static-dynamic': defineAsyncComponent(() => import('./interactive-slides/StaticDynamicSlide.vue')),
   // 之後新增更多簡報時，在這裡註冊
 }
 
