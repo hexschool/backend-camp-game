@@ -5,17 +5,20 @@ import type { QuizQuestion } from '../content/types'
 const props = defineProps<{
   title: string
   questions: QuizQuestion[]
+  chapterId?: number  // 用於儲存分數到 progressStore
 }>()
 
 const emit = defineEmits<{
-  (e: 'done', payload: { correctCount: number; total: number }): void
+  (e: 'done', payload: { correctCount: number; total: number; firstAttemptCorrect: number }): void
   (e: 'cancel'): void
 }>()
 
 const idx = ref(0)
 const selected = ref<string | null>(null)
 const submitted = ref(false)
-const correctCount = ref(0)
+const correctCount = ref(0)  // 最終答對數（重試後）
+const firstAttemptCorrect = ref(0)  // 第一次就答對的題數（計分用）
+const hasAttempted = ref(false)  // 這題是否已經嘗試過（用於追蹤第一次作答）
 
 const q = computed(() => props.questions[idx.value])
 const total = computed(() => props.questions.length)
@@ -27,24 +30,39 @@ function submit() {
   if (!selected.value) return
   if (submitted.value) return
   submitted.value = true
-  if (selected.value === q.value.correctOptionId) correctCount.value += 1
+
+  const correct = selected.value === q.value.correctOptionId
+
+  // 第一次作答才計入 firstAttemptCorrect
+  if (!hasAttempted.value && correct) {
+    firstAttemptCorrect.value += 1
+  }
+  hasAttempted.value = true
+
+  if (correct) correctCount.value += 1
 }
 
 // 答錯時重新作答
 function retry() {
   selected.value = null
   submitted.value = false
+  // hasAttempted 保持 true，因為已經嘗試過了
 }
 
 function next() {
   if (!submitted.value) return
   if (isLast.value) {
-    emit('done', { correctCount: correctCount.value, total: total.value })
+    emit('done', {
+      correctCount: correctCount.value,
+      total: total.value,
+      firstAttemptCorrect: firstAttemptCorrect.value,  // 第一次就答對的題數
+    })
     return
   }
   idx.value += 1
   selected.value = null
   submitted.value = false
+  hasAttempted.value = false  // 重置，新的一題
 }
 </script>
 

@@ -99,6 +99,14 @@ const dialogueImage = computed(() => {
   return null
 })
 
+const showSaveHint = computed(() => {
+  // 只有設定 showSaveHint: true 的圖片才顯示「右鍵另存」提示
+  if (node.value?.type === 'dialogue' && node.value.image) {
+    return (node.value as any).showSaveHint === true
+  }
+  return false
+})
+
 const typingText = ref('')
 const typingTimer = ref<number | null>(null)
 
@@ -199,7 +207,10 @@ function onChoiceSelect(_option: ChoiceOption) {
   enterNode(nodes.value[nextIdx]!)
 }
 
-function onQuizDone() {
+function onQuizDone(payload: { correctCount: number; total: number; firstAttemptCorrect: number }) {
+  // 儲存測驗分數（只計算第一次作答的結果）
+  progress.saveQuizScore(chapterId.value, payload.firstAttemptCorrect, payload.total)
+
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
   progress.setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
@@ -338,13 +349,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
               alt="展示圖片"
               class="max-h-[40vh] max-w-full rounded-xl border-2 border-white/30 bg-black/50 p-6 object-contain shadow-2xl md:max-h-[50vh]"
             />
-            <!-- 箭頭引導 -->
-            <div class="absolute -left-12 top-1/2 -translate-y-1/2 text-3xl md:-left-16 md:text-4xl">
-              👉
-            </div>
-            <div class="absolute -left-12 top-1/2 mt-8 -translate-y-1/2 rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-bold text-white shadow-lg md:-left-16">
-              右鍵另存
-            </div>
+            <!-- 箭頭引導（只在需要下載時顯示） -->
+            <template v-if="showSaveHint">
+              <div class="absolute -left-12 top-1/2 -translate-y-1/2 text-3xl md:-left-16 md:text-4xl">
+                👉
+              </div>
+              <div class="absolute -left-12 top-1/2 mt-8 -translate-y-1/2 rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-bold text-white shadow-lg md:-left-16">
+                右鍵另存
+              </div>
+            </template>
           </div>
         </div>
       </div>
@@ -402,7 +415,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       @close="onSlidesClose"
     />
 
-    <QuizModal v-if="showQuizModal && quizNode" :title="quizNode.title" :questions="quizNode.questions" @done="onQuizDone" @cancel="onQuizCancel" />
+    <QuizModal v-if="showQuizModal && quizNode" :title="quizNode.title" :questions="quizNode.questions" :chapterId="chapterId" @done="onQuizDone" @cancel="onQuizCancel" />
 
     <CelebrationModal
       v-if="showCelebrationModal && celebrationNode"

@@ -33,6 +33,15 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   'docker-intro': defineAsyncComponent(() => import('./interactive-slides/DockerIntroSlide.vue')),
   'architecture-intro': defineAsyncComponent(() => import('./interactive-slides/ArchitectureIntroSlide.vue')),
   'static-dynamic': defineAsyncComponent(() => import('./interactive-slides/StaticDynamicSlide.vue')),
+  'coach-backend': defineAsyncComponent(() => import('./interactive-slides/CoachBackendSlide.vue')),
+  'url-request': defineAsyncComponent(() => import('./interactive-slides/UrlRequestSlide.vue')),
+  'network-request': defineAsyncComponent(() => import('./interactive-slides/NetworkRequestSlide.vue')),
+  'api-intro': defineAsyncComponent(() => import('./interactive-slides/ApiIntroSlide.vue')),
+  'api-demo': defineAsyncComponent(() => import('./interactive-slides/ApiDemoSlide.vue')),
+  'drag-quiz': defineAsyncComponent(() => import('./interactive-slides/DragQuizSlide.vue')),
+  'drag-sort': defineAsyncComponent(() => import('./interactive-slides/DragSortSlide.vue')),
+  'data-flow': defineAsyncComponent(() => import('./interactive-slides/DataFlowSlide.vue')),
+  'third-party': defineAsyncComponent(() => import('./interactive-slides/ThirdPartySlide.vue')),
   // 之後新增更多簡報時，在這裡註冊
 }
 

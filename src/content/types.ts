@@ -7,6 +7,7 @@ export type DialogueNode = {
   scene: string
   coachExpression: string
   image?: string
+  showSaveHint?: boolean
 }
 
 export type InputNameNode = {

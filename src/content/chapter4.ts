@@ -1,46 +1,46 @@
 import type { ChapterConfig, ChapterNode } from './types'
 
 const nodes: ChapterNode[] = [
-  // ===== 開場對話：海克絲興奮地說要換 Logo =====
+  // ===== 開場對話：海克絲發現 Logo 忘了改 =====
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '早安！昨天跟合夥人聊到半夜，我們決定要換 Logo。',
+    text: '糟糕！我跟合夥人昨天看網站的時候發現，Logo 忘了改掉！',
     scene: 'meeting',
-    coachExpression: 'praise',
+    coachExpression: 'shocked',
   },
   {
     type: 'dialogue',
     speaker: '旁白',
-    text: '今日任務文件：https://hackmd.io/@hexschool/backend-camp-day4',
+    text: '今日任務文件：https://hackmd.io/YAjRRYJhSMqm_eRp0gnHJQ?view',
     scene: 'meeting',
     coachExpression: 'normal',
   },
   {
     type: 'dialogue',
     speaker: '你',
-    text: '蛤？不是才剛做好嗎？',
+    text: '忘了改？怎麼說？',
     scene: 'meeting',
     coachExpression: 'normal',
   },
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '(拉了張椅子坐下來) 你看喔，現在的 Logo 叫 LiveFit+，但我們昨天討論了一下，覺得這個「+」現在用掉太可惜了。',
+    text: '你看，現在網站上的 Logo 是「LiveFit+」，但我們目前應該要用「LiveFit」才對。',
     scene: 'meeting',
     coachExpression: 'normal',
   },
   {
     type: 'dialogue',
     speaker: '你',
-    text: '可惜？',
+    text: '「+」有什麼差別嗎？',
     scene: 'meeting',
     coachExpression: 'normal',
   },
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '對啊，我們才剛起步，現在應該先叫 LiveFit 就好。',
+    text: '那個「+」是要留給之後用的。我們才剛起步，現在應該先叫 LiveFit 就好。',
     scene: 'meeting',
     coachExpression: 'normal',
   },
@@ -61,14 +61,14 @@ const nodes: ChapterNode[] = [
   {
     type: 'dialogue',
     speaker: '你',
-    text: '原來如此！所以先把「+」拿掉，等 2.0 再加回來？',
+    text: '原來如此！所以要把「+」先拿掉，等 2.0 再加回來？',
     scene: 'meeting',
     coachExpression: 'normal',
   },
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '沒錯！設計師已經做好新版 Logo 了，檔名是 logo-text-v2.png，你幫我換上去。',
+    text: '沒錯！設計師已經做好正確的 Logo 了，檔名是 logo-text-v2.png，你幫我換上去。',
     scene: 'meeting',
     coachExpression: 'praise',
   },
@@ -128,7 +128,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '你知道前任後端工程師是怎麼處理教練列表的嗎？',
     scene: 'meeting',
-    coachExpression: 'sigh',
+    coachExpression: 'normal',
   },
   {
     type: 'dialogue',
@@ -149,7 +149,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '什麼王小明、李小華、50 個教練的名字、照片、專長⋯⋯全部直接寫在 HTML 裡面。',
     scene: 'meeting',
-    coachExpression: 'sigh',
+    coachExpression: 'normal',
   },
   {
     type: 'dialogue',
@@ -184,7 +184,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '他說好⋯⋯繼續改程式碼。',
     scene: 'meeting',
-    coachExpression: 'sigh',
+    coachExpression: 'normal',
   },
   {
     type: 'dialogue',
@@ -212,7 +212,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '沒錯！每次教練資料變動，都要改程式碼、重新部署網站。萬一改錯，網站就爆炸了。',
     scene: 'meeting',
-    coachExpression: 'sigh',
+    coachExpression: 'normal',
   },
 
   // ===== 選擇題：測試理解 =====
@@ -302,6 +302,66 @@ const nodes: ChapterNode[] = [
   },
   {
     type: 'dialogue',
+    speaker: '你',
+    text: '等等，那像是教練自己要新增課程的話呢？',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
+    speaker: '你',
+    text: '教練登入自己帳號，就可以用介面新增課程，不用勞煩工程師改程式碼嘍？',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '(露出欣慰的微笑) 沒錯！這就是動態資料的好處。',
+    scene: 'meeting',
+    coachExpression: 'praise',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '讓我透過示範給你看，教練是怎麼透過網頁新增課程的。',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+
+  // ===== 教練後台互動簡報 =====
+  {
+    type: 'interactiveSlide',
+    slideId: 'coach-backend',
+    title: '教練後台：新增課程流程',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+
+  // ===== 互動簡報後對話 =====
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '看到了嗎？教練自己操作介面，資料就存進資料庫了。',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '使用者刷新網頁，就能看到最新的課程列表。完全不需要工程師介入！',
+    scene: 'meeting',
+    coachExpression: 'praise',
+  },
+  {
+    type: 'dialogue',
+    speaker: '你',
+    text: '原來如此！這就是為什麼動態資料要存在資料庫的原因。',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
     speaker: '海克絲',
     text: '那我再考考你幾個問題，確認你真的懂了。',
     scene: 'meeting',
@@ -372,17 +432,6 @@ const nodes: ChapterNode[] = [
       },
       {
         id: 'q6',
-        prompt: '如果老闆說：「幫我把首頁的大圖換掉」，你應該？',
-        options: [
-          { id: 'a', label: '去資料庫修改' },
-          { id: 'b', label: '去 public/ 或 assets/ 資料夾換圖片，並修改引用的程式碼' },
-          { id: 'c', label: '重新安裝 Docker' },
-        ],
-        correctOptionId: 'b',
-        explanation: '首頁大圖是靜態資源，去對應資料夾換檔案，並確認引用的程式碼改成新檔名。',
-      },
-      {
-        id: 'q7',
         prompt: '在 LiveFit 專案中，Logo 圖片放在哪裡？',
         options: [
           { id: 'a', label: 'frontend/src/components/' },
@@ -393,7 +442,7 @@ const nodes: ChapterNode[] = [
         explanation: 'Logo 是靜態資源，放在 frontend/public/ 資料夾。',
       },
       {
-        id: 'q8',
+        id: 'q7',
         prompt: '如果要修改網站使用的 Logo，除了換圖片檔案，還需要改什麼？',
         options: [
           { id: 'a', label: '只要換圖片就好，不用改其他東西' },
@@ -404,7 +453,7 @@ const nodes: ChapterNode[] = [
         explanation: '換圖片後，還要找到引用它的程式碼（如 LayoutHeader.vue）改成新檔名。',
       },
       {
-        id: 'q9',
+        id: 'q8',
         prompt: '用 LiveFit 來比喻，「Logo」和「教練列表」分別對應什麼？',
         options: [
           { id: 'a', label: 'Logo = 動態資料，教練列表 = 靜態資源' },
@@ -415,7 +464,7 @@ const nodes: ChapterNode[] = [
         explanation: 'Logo 很少換（靜態資源），教練列表隨時可能變動（動態資料）。',
       },
       {
-        id: 'q10',
+        id: 'q9',
         prompt: '動態資料的正確處理方式是？',
         options: [
           { id: 'a', label: '直接寫死在 HTML 裡面' },
@@ -471,6 +520,7 @@ const nodes: ChapterNode[] = [
     scene: 'meeting',
     coachExpression: 'normal',
     image: '/images/logo-text-v2.png',
+    showSaveHint: true,
   },
   {
     type: 'dialogue',
@@ -518,6 +568,86 @@ const nodes: ChapterNode[] = [
     type: 'dialogue',
     speaker: '海克絲',
     text: '那接下來就拜託你嘍！加油！',
+    scene: 'meeting',
+    coachExpression: 'praise',
+  },
+
+  // ===== 業界彩蛋 =====
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '對了，考你一個業界小知識。',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '假設你是新人工程師，到職第一天主管跟你說：「幫我改個 Logo，應該很快吧？」',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '在大型公司的複雜專案中，你覺得實際上可能要多久？',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'choice',
+    prompt: '改個 Logo 實際上要多久？',
+    scene: 'meeting',
+    coachExpression: 'normal',
+    options: [
+      {
+        id: 'a',
+        label: '5 分鐘，不就換張圖嗎',
+        response: '(搖頭) 那是主管心裡想的時間啦！實際上新人要面對的可多了⋯⋯',
+        responseExpression: 'normal',
+        isCorrect: false,
+      },
+      {
+        id: 'b',
+        label: '1～2 小時，找一下檔案而已',
+        response: '(搖頭) 太樂觀了！那是在小專案或你已經很熟的情況。大型專案可沒這麼簡單⋯⋯',
+        responseExpression: 'normal',
+        isCorrect: false,
+      },
+      {
+        id: 'c',
+        label: '3～5 天，甚至更久',
+        response: '(點頭) 沒錯！你很有業界 sense。主管心裡想「不就換張圖？」但新人實際上要面對的可多了⋯⋯',
+        responseExpression: 'praise',
+        isCorrect: true,
+      },
+    ],
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '搞懂專案架構 1～2 小時\n等權限開通 1 天\n問同事圖片放哪結果他在開會等半天\n本地環境跑不起來找 DevOps 等半天\n發 PR 等 Code Review 數小時到隔天\nCI/CD 跑失敗查原因 1～2 小時\n部署測試環境 PM 要驗收等半天\n上 Production 發現 CDN 快取是舊的再等 1 小時\n⋯⋯加一加，就是 3～5 天了！',
+    scene: 'meeting',
+    coachExpression: 'sigh',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '所以先搞懂專案結構真的很重要，懂了之後才能越來越快。',
+    scene: 'meeting',
+    coachExpression: 'praise',
+  },
+  {
+    type: 'dialogue',
+    speaker: '你',
+    text: '我知道了！那我現在就去把 Logo 換掉。',
+    scene: 'meeting',
+    coachExpression: 'normal',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '好，交給你嘍！加油！',
     scene: 'meeting',
     coachExpression: 'praise',
   },

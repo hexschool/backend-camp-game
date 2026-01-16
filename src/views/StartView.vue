@@ -47,12 +47,19 @@ function resetAll() {
 // 章節選單
 const showChapterSelect = ref(false)
 const chapterList = computed(() => {
-  return Object.values(chapters).map((ch) => ({
-    id: ch.id,
-    title: ch.title,
-    // 已通關 = currentChapter 大於此章節
-    completed: progress.currentChapter > ch.id,
-  }))
+  return Object.values(chapters).map((ch) => {
+    const score = progress.quizScores[ch.id]
+    const isCompleted = progress.currentChapter > ch.id
+    return {
+      id: ch.id,
+      title: ch.title,
+      completed: isCompleted,
+      // Day 1-3 通關後預設 100%，Day 4+ 顯示實際分數
+      score: ch.id <= 3 ? (isCompleted ? 100 : null) : (score ? score.percentage : null),
+      // Day 1-3 通關就顯示，Day 4+ 要有分數才顯示
+      hasScore: ch.id <= 3 ? isCompleted : (score != null),
+    }
+  })
 })
 
 function openChapterSelect() {
@@ -234,8 +241,16 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
                     </span>
                     <span class="font-semibold text-white">{{ ch.title }}</span>
                   </span>
-                  <span class="text-xs" :class="ch.completed ? 'text-emerald-400' : 'text-white/40'">
-                    {{ ch.completed ? '已通關' : `Day ${ch.id}` }}
+                  <span class="flex items-center gap-2">
+                    <!-- 測驗評價圓點（Day 4+ 且有分數） -->
+                    <span
+                      v-if="ch.hasScore"
+                      class="h-2.5 w-2.5 rounded-full"
+                      :class="ch.score === 100 ? 'bg-amber-400 shadow-[0_0_6px_rgba(251,191,36,0.6)]' : ch.score >= 85 ? 'bg-emerald-400' : 'bg-rose-400'"
+                    />
+                    <span class="text-xs" :class="ch.completed ? 'text-emerald-400' : 'text-white/40'">
+                      {{ ch.completed ? '已通關' : `Day ${ch.id}` }}
+                    </span>
                   </span>
                 </div>
               </button>
