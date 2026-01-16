@@ -64,6 +64,34 @@ export type CelebrationNode = {
   coachExpression: string
 }
 
+// 密碼輸入節點 - 用於彩蛋結局輸入密碼
+export type PasswordInputNode = {
+  type: 'passwordInput'
+  /** 輸入提示文字 */
+  prompt: string
+  /** 提示訊息 */
+  hint?: string
+  scene: string
+  coachExpression: string
+}
+
+// 結局完成節點 - 顯示結局完成畫面
+export type EndingCompleteNode = {
+  type: 'endingComplete'
+  /** 結局類型 */
+  endingType: 'bad' | 'normal' | 'true' | 'hidden'
+  /** 結局標題 */
+  title: string
+  /** 結局圖示 */
+  icon: string
+  /** 顏色主題 */
+  color: 'rose' | 'sky' | 'emerald' | 'amber'
+  /** 是否可以觸發彩蛋結局 */
+  canTriggerHidden?: boolean
+  scene: string
+  coachExpression: string
+}
+
 // 互動式簡報節點 - 用於嵌入自訂的 Vue 互動元件
 export type InteractiveSlideNode = {
   type: 'interactiveSlide'
@@ -97,7 +125,7 @@ export type ChoiceNode = {
   coachExpression: string
 }
 
-export type ChapterNode = DialogueNode | InputNameNode | SlidesNode | QuizNode | CelebrationNode | InteractiveSlideNode | ChoiceNode
+export type ChapterNode = DialogueNode | InputNameNode | SlidesNode | QuizNode | CelebrationNode | InteractiveSlideNode | ChoiceNode | PasswordInputNode | EndingCompleteNode
 
 export type ChapterConfig = {
   id: number

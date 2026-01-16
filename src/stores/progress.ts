@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { endings, type EndingType } from '../config/endings'
 
 const STORAGE_KEY = 'livefit.progress'
 
@@ -8,13 +9,23 @@ type QuizScore = {
   percentage: number  // 百分比，方便查看
 }
 
-type EndingType = 'hidden' | 'true' | 'normal' | 'bad'
+// 成就類型
+type AchievementId = 'ending_bad' | 'ending_normal' | 'ending_true' | 'ending_hidden'
+
+// 成就定義（從統一的 endings 設定檔產生）
+export const achievementDefinitions: Record<AchievementId, { icon: string; title: string; description: string }> = {
+  ending_bad: { icon: endings.bad.icon, title: endings.bad.title, description: endings.bad.description },
+  ending_normal: { icon: endings.normal.icon, title: endings.normal.title, description: endings.normal.description },
+  ending_true: { icon: endings.true.icon, title: endings.true.title, description: endings.true.description },
+  ending_hidden: { icon: endings.hidden.icon, title: endings.hidden.title, description: endings.hidden.description },
+}
 
 type ProgressState = {
   currentChapter: number
   chapterNodeIndices: Record<number, number>
   quizScores: Record<number, QuizScore>  // 每日測驗分數（key = chapter/day）
-  hasDay7Item: boolean  // Day 7 解鎖道具（隱藏結局用）
+  hasDay7Item: boolean  // Day 7 解鎖道具（彩蛋結局用）
+  achievements: AchievementId[]  // 已解鎖的成就
 }
 
 function safeParse<T>(raw: string | null): T | null {
@@ -32,6 +43,7 @@ export const useProgressStore = defineStore('progress', {
     chapterNodeIndices: { 1: 0 },
     quizScores: {},
     hasDay7Item: false,
+    achievements: [],
   }),
   getters: {
     // 取得指定章節的進度
@@ -59,6 +71,23 @@ export const useProgressStore = defineStore('progress', {
       if (scores.length === 0) return 0
       return Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
     },
+    // 檢查是否已解鎖某成就
+    hasAchievement: (state) => (id: AchievementId) => {
+      return state.achievements.includes(id)
+    },
+    // 取得所有成就狀態
+    allAchievements: (state) => {
+      const allIds: AchievementId[] = ['ending_bad', 'ending_normal', 'ending_true', 'ending_hidden']
+      return allIds.map(id => ({
+        id,
+        ...achievementDefinitions[id],
+        unlocked: state.achievements.includes(id),
+      }))
+    },
+    // 已解鎖成就數量
+    unlockedCount: (state) => state.achievements.length,
+    // 總成就數量
+    totalAchievements: () => Object.keys(achievementDefinitions).length,
     // 判定結局類型
     endingType: (state): EndingType => {
       const days = [4, 5, 6, 7, 8, 9, 10]
@@ -76,11 +105,11 @@ export const useProgressStore = defineStore('progress', {
       const avgScore = Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
       const isPerfect = scores.every(s => s === 100) && scores.length === 7
 
-      // 隱藏結局：100% + Day 7 道具（在真結局後額外觸發）
+      // 彩蛋結局：100% + Day 7 道具（在完美結局後額外觸發）
       if (isPerfect && state.hasDay7Item) {
         return 'hidden'
       }
-      // 真結局：= 100%
+      // 完美結局：= 100%
       if (avgScore === 100) {
         return 'true'
       }
@@ -114,6 +143,9 @@ export const useProgressStore = defineStore('progress', {
         }
         if (typeof data.hasDay7Item === 'boolean') {
           this.hasDay7Item = data.hasDay7Item
+        }
+        if (Array.isArray(data.achievements)) {
+          this.achievements = data.achievements
         }
         // 向後相容舊格式
         if ('chapter1NodeIndex' in data && typeof (data as { chapter1NodeIndex?: number }).chapter1NodeIndex === 'number') {
@@ -159,11 +191,35 @@ export const useProgressStore = defineStore('progress', {
       this.hasDay7Item = has
       this._save()
     },
+    // 解鎖成就（根據結局類型）
+    unlockEndingAchievement(endingType: EndingType) {
+      const achievementMap: Record<EndingType, AchievementId> = {
+        bad: 'ending_bad',
+        normal: 'ending_normal',
+        true: 'ending_true',
+        hidden: 'ending_hidden',
+      }
+      const achievementId = achievementMap[endingType]
+      if (!this.achievements.includes(achievementId)) {
+        this.achievements.push(achievementId)
+        this._save()
+      }
+    },
     reset() {
       this.currentChapter = 1
       this.chapterNodeIndices = { 1: 0 }
       this.quizScores = {}
       this.hasDay7Item = false
+      // 成就不重置，保留玩家的解鎖紀錄
+      this._save()
+    },
+    // 完全重置（包含成就）
+    resetAll() {
+      this.currentChapter = 1
+      this.chapterNodeIndices = { 1: 0 }
+      this.quizScores = {}
+      this.hasDay7Item = false
+      this.achievements = []
       this._save()
     },
     _save() {
@@ -172,6 +228,7 @@ export const useProgressStore = defineStore('progress', {
         chapterNodeIndices: this.chapterNodeIndices,
         quizScores: this.quizScores,
         hasDay7Item: this.hasDay7Item,
+        achievements: this.achievements,
       }))
     },
   },

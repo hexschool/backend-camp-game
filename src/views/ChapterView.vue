@@ -2,9 +2,12 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getChapter, chapters } from '../content/chapters'
-import type { ChapterNode, InputNameNode, SlidesNode, QuizNode, CelebrationNode, InteractiveSlideNode, ChoiceNode, ChoiceOption } from '../content/types'
+import type { ChapterNode, InputNameNode, SlidesNode, QuizNode, CelebrationNode, InteractiveSlideNode, ChoiceNode, ChoiceOption, PasswordInputNode, EndingCompleteNode } from '../content/types'
+import { verifyPassword } from '../utils/cipher'
 import { usePlayerStore } from '../stores/player'
 import { useProgressStore } from '../stores/progress'
+import { generatePassword } from '../utils/cipher'
+import { endings, type EndingType } from '../config/endings'
 import NameInputModal from '../components/NameInputModal.vue'
 import SlidesModal from '../components/SlidesModal.vue'
 import QuizModal from '../components/QuizModal.vue'
@@ -37,6 +40,12 @@ watch(chapterId, () => {
 onMounted(() => {
   player.loadFromStorage()
   progress.loadFromStorage()
+  // 進入結局章節時顯示成就提示
+  if (isEndingChapter.value) {
+    setTimeout(() => {
+      showEndingAchievement()
+    }, 500)
+  }
 })
 
 // 背景音樂
@@ -77,6 +86,8 @@ const showQuizModal = computed(() => node.value?.type === 'quiz')
 const showCelebrationModal = computed(() => node.value?.type === 'celebration')
 const showInteractiveSlideModal = computed(() => node.value?.type === 'interactiveSlide')
 const showChoiceModal = computed(() => node.value?.type === 'choice')
+const showPasswordInput = computed(() => node.value?.type === 'passwordInput')
+const showEndingComplete = computed(() => node.value?.type === 'endingComplete')
 
 const nameNode = computed<InputNameNode | null>(() =>
   node.value?.type === 'inputName' ? (node.value as InputNameNode) : null,
@@ -86,6 +97,54 @@ const quizNode = computed<QuizNode | null>(() => (node.value?.type === 'quiz' ? 
 const celebrationNode = computed<CelebrationNode | null>(() => (node.value?.type === 'celebration' ? (node.value as CelebrationNode) : null))
 const interactiveSlideNode = computed<InteractiveSlideNode | null>(() => (node.value?.type === 'interactiveSlide' ? (node.value as InteractiveSlideNode) : null))
 const choiceNode = computed<ChoiceNode | null>(() => (node.value?.type === 'choice' ? (node.value as ChoiceNode) : null))
+const passwordInputNode = computed<PasswordInputNode | null>(() => (node.value?.type === 'passwordInput' ? (node.value as PasswordInputNode) : null))
+const endingCompleteNode = computed<EndingCompleteNode | null>(() => (node.value?.type === 'endingComplete' ? (node.value as EndingCompleteNode) : null))
+
+// 結局密碼輸入
+const passwordInput = ref('')
+const passwordError = ref('')
+
+// 是否為結局章節（id >= 100）
+const isEndingChapter = computed(() => chapterId.value >= 100)
+
+// 成就提示
+const showAchievement = ref(false)
+const achievementIcon = ref('')
+const achievementTitle = ref('')
+
+// 結局成就對應表（從統一的 endings 設定檔產生）
+const endingAchievements: Record<number, { icon: string; title: string; type: EndingType }> = {
+  [endings.bad.chapterId]: { icon: endings.bad.icon, title: endings.bad.description, type: 'bad' },
+  [endings.normal.chapterId]: { icon: endings.normal.icon, title: endings.normal.description, type: 'normal' },
+  [endings.true.chapterId]: { icon: endings.true.icon, title: endings.true.description, type: 'true' },
+}
+
+// 進入結局章節時顯示成就提示並解鎖成就
+function showEndingAchievement() {
+  const achievement = endingAchievements[chapterId.value]
+  if (achievement) {
+    achievementIcon.value = achievement.icon
+    achievementTitle.value = achievement.title
+    showAchievement.value = true
+    // 立即解鎖成就到 localStorage
+    progress.unlockEndingAchievement(achievement.type)
+    setTimeout(() => {
+      showAchievement.value = false
+    }, 3000)
+  }
+}
+
+// 顯示彩蛋結局成就並解鎖
+function showHiddenEndingAchievement() {
+  achievementIcon.value = endings.hidden.icon
+  achievementTitle.value = endings.hidden.description
+  showAchievement.value = true
+  // 立即解鎖彩蛋結局成就到 localStorage
+  progress.unlockEndingAchievement('hidden')
+  setTimeout(() => {
+    showAchievement.value = false
+  }, 3000)
+}
 
 const dialogueImage = computed(() => {
   if (node.value?.type === 'dialogue' && node.value.image) {
@@ -112,8 +171,24 @@ const typingTimer = ref<number | null>(null)
 
 function resolveText(raw: string) {
   const name = player.name || '你'
-  return raw.split('{name}').join(name)
+  let text = raw.split('{name}').join(name)
+  // 替換密碼（Day 7 用）
+  if (text.includes('{password}') && player.name) {
+    text = text.split('{password}').join(generatePassword(player.name))
+  }
+  return text
 }
+
+// Day 7 密碼顯示時，如果沒有名字要強制輸入
+const showDay7NameModal = ref(false)
+
+// 檢查是否需要強制輸入名字（Day 7 且對話包含 {password} 且沒有名字）
+const needsNameForPassword = computed(() => {
+  if (chapterId.value !== 7) return false
+  if (player.name) return false
+  if (node.value?.type !== 'dialogue') return false
+  return node.value.text.includes('{password}')
+})
 
 // 將文字中的 URL 轉換為可點擊的連結
 function linkifyText(text: string): string {
@@ -136,12 +211,34 @@ function startTypewriter(text: string) {
 }
 
 function enterNode(n: ChapterNode) {
+  // Day 7 密碼對話：如果沒有名字，先顯示輸入名字的 Modal
+  if (n?.type === 'dialogue' && n.text.includes('{password}') && !player.name) {
+    showDay7NameModal.value = true
+    return
+  }
+
   if (n?.type === 'dialogue') startTypewriter(resolveText(n.text))
   else {
     if (typingTimer.value) window.clearInterval(typingTimer.value)
     typingTimer.value = null
     typingText.value = ''
   }
+}
+
+// Day 7 輸入名字後繼續
+function onDay7NameSubmit(name: string) {
+  player.setName(name)
+  showDay7NameModal.value = false
+  // 重新進入當前節點，這次會正常顯示密碼
+  if (node.value) enterNode(node.value)
+}
+
+function onDay7NameCancel() {
+  // 取消的話回到上一個節點
+  showDay7NameModal.value = false
+  const prevIdx = Math.max(nodeIndex.value - 1, 0)
+  progress.setNodeIndex(chapterId.value, prevIdx)
+  enterNode(nodes.value[prevIdx]!)
 }
 
 onMounted(() => {
@@ -224,6 +321,11 @@ function onQuizCancel() {
 }
 
 function onCelebrationClose() {
+  // Day 7 完成時解鎖隱藏道具
+  if (chapterId.value === 7) {
+    progress.setDay7Item(true)
+  }
+
   // 完成本章
   progress.completeChapter(chapterId.value)
 
@@ -233,10 +335,57 @@ function onCelebrationClose() {
     // 有下一關，直接進入
     router.push({ name: 'chapter', params: { id: String(nextChapterId) } })
   } else {
-    // 沒有下一關，返回開始畫面
-    router.push({ name: 'start' })
+    // Day 10 完成後，根據分數進入對應結局章節
+    const endingType = progress.endingType
+    const endingChapterId = {
+      bad: 101,
+      normal: 102,
+      true: 103,
+      hidden: 103, // hidden 從 true 結局開始
+    }[endingType] || 101
+    router.push({ name: 'chapter', params: { id: String(endingChapterId) } })
   }
 }
+
+// 密碼驗證
+function onPasswordSubmit() {
+  if (!player.name) {
+    passwordError.value = '找不到玩家名字，請重新開始遊戲'
+    return
+  }
+
+  if (verifyPassword(passwordInput.value, player.name)) {
+    passwordError.value = ''
+    passwordInput.value = ''
+    // 顯示彩蛋結局成就
+    showHiddenEndingAchievement()
+    // 進入下一個節點
+    const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
+    progress.setNodeIndex(chapterId.value, nextIdx)
+    enterNode(nodes.value[nextIdx]!)
+  } else {
+    passwordError.value = '密碼錯誤，請再試一次'
+  }
+}
+
+// 結局完成
+function onEndingComplete() {
+  router.push({ name: 'start' })
+}
+
+// 觸發彩蛋結局（繼續到下一個節點）
+function onTriggerHiddenEnding() {
+  const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
+  progress.setNodeIndex(chapterId.value, nextIdx)
+  enterNode(nodes.value[nextIdx]!)
+}
+
+// 是否可以觸發彩蛋結局（完美結局完成節點直接繼續）
+const canTriggerHidden = computed(() => {
+  if (!showEndingComplete.value) return false
+  const node = endingCompleteNode.value
+  return node?.canTriggerHidden === true
+})
 
 const sceneUrl = computed(() => `${import.meta.env.BASE_URL}images/scene/${node.value?.scene ?? 'normal'}.png`)
 const coachUrl = computed(() => `${import.meta.env.BASE_URL}images/coach/${node.value?.coachExpression ?? 'normal'}.png`)
@@ -331,8 +480,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
     <!-- 中間內容區：flex-1 填滿剩餘空間，使用 justify-end 讓內容靠底部 -->
     <main class="relative z-10 flex flex-1 flex-col justify-end">
-      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide/choice 時隱藏） -->
-      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
+      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide/choice/endingComplete 時隱藏） -->
+      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal && !showEndingComplete" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
         <img
           class="h-full w-auto max-w-[85vw] object-contain object-bottom"
           :src="coachUrl"
@@ -362,8 +511,50 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
         </div>
       </div>
 
-      <!-- 對話框區域：在底部，內容多時往上長蓋住教練（quiz/slides/celebration/interactiveSlide/choice 時隱藏） -->
-      <div v-if="!showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal" class="relative z-20 px-3 pb-safe-bottom md:pb-6">
+      <!-- 結局完成畫面 -->
+      <div v-if="showEndingComplete && endingCompleteNode" class="flex flex-1 flex-col items-center justify-center px-4">
+        <div class="mb-8 text-center">
+          <div class="mb-4 text-6xl">{{ endingCompleteNode.icon }}</div>
+          <h1 class="mb-2 text-3xl font-bold text-white">
+            {{ endingCompleteNode.endingType === 'hidden' ? '達成彩蛋結局' : '結局' }}
+          </h1>
+          <p
+            class="text-2xl font-bold"
+            :class="{
+              'text-rose-400': endingCompleteNode.color === 'rose',
+              'text-sky-400': endingCompleteNode.color === 'sky',
+              'text-emerald-400': endingCompleteNode.color === 'emerald',
+              'text-amber-400': endingCompleteNode.color === 'amber',
+            }"
+          >
+            「{{ endingCompleteNode.title }}」
+          </p>
+          <p class="mt-2 text-sm text-white/50">結局分數：{{ progress.endingScore }}%</p>
+        </div>
+
+        <!-- 彩蛋結局觸發按鈕（完美結局才顯示） -->
+        <div v-if="canTriggerHidden" class="text-center">
+          <p class="mb-4 text-white/60">等等...手機又響了？</p>
+          <button
+            class="rounded-xl border border-amber-500/50 bg-amber-900/30 px-6 py-3 font-semibold text-amber-400 transition-all hover:border-amber-400 hover:bg-amber-900/50"
+            @click="onTriggerHiddenEnding"
+          >
+            查看新訊息
+          </button>
+        </div>
+
+        <!-- 返回首頁按鈕（非完美結局） -->
+        <button
+          v-if="!canTriggerHidden"
+          class="mt-4 rounded-xl border border-white/20 bg-slate-800/50 px-6 py-3 font-semibold text-white transition-all hover:border-white/40 hover:bg-slate-800"
+          @click="onEndingComplete"
+        >
+          返回首頁
+        </button>
+      </div>
+
+      <!-- 對話框區域：在底部，內容多時往上長蓋住教練（quiz/slides/celebration/interactiveSlide/choice/endingComplete/passwordInput 時隱藏） -->
+      <div v-if="!showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal && !showEndingComplete && !showPasswordInput" class="relative z-20 px-3 pb-safe-bottom md:pb-6">
         <div class="mx-auto w-full max-w-[1100px] rounded-2xl border border-white/15 bg-slate-950/95 p-4 backdrop-blur">
           <div class="mb-2 inline-flex items-center rounded-full border px-3 py-1 text-sm font-black" :class="speakerTagClass">
             {{ speakerLabel }}
@@ -395,7 +586,54 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
           </div>
         </div>
       </div>
+
+      <!-- 密碼輸入對話框 -->
+      <div v-if="showPasswordInput && passwordInputNode" class="relative z-20 px-3 pb-safe-bottom md:pb-6">
+        <div class="mx-auto w-full max-w-[1100px] rounded-2xl border border-white/15 bg-slate-950/95 p-4 backdrop-blur">
+          <div class="mb-2 inline-flex items-center rounded-full border border-amber-400/35 bg-amber-400/20 px-3 py-1 text-sm font-black text-amber-200">
+            輸入密碼
+          </div>
+          <div class="min-h-[72px] whitespace-pre-wrap text-white/90 leading-7 font-semibold">
+            <p class="mb-4">{{ passwordInputNode.prompt }}</p>
+            <input
+              v-model="passwordInput"
+              type="text"
+              class="mb-3 w-full max-w-md rounded-xl border border-white/20 bg-slate-800 px-4 py-3 text-white placeholder-white/40 focus:border-amber-400/50 focus:outline-none"
+              placeholder="輸入密碼..."
+              @keyup.enter="onPasswordSubmit"
+            />
+            <p v-if="passwordError" class="mb-3 text-sm text-rose-400">
+              {{ passwordError }}
+            </p>
+            <button
+              class="rounded-xl border border-amber-500/50 bg-amber-900/30 px-6 py-3 font-semibold text-amber-400 transition-all hover:border-amber-400 hover:bg-amber-900/50"
+              @click="onPasswordSubmit"
+            >
+              確認
+            </button>
+            <p v-if="passwordInputNode.hint" class="mt-3 text-xs text-white/30">
+              {{ passwordInputNode.hint }}
+            </p>
+          </div>
+        </div>
+      </div>
     </main>
+
+    <!-- 結局成就提示 -->
+    <Transition name="achievement">
+      <div
+        v-if="showAchievement"
+        class="fixed right-4 top-16 z-30 rounded-xl border border-white/20 bg-slate-900/95 px-4 py-3 shadow-lg backdrop-blur"
+      >
+        <div class="flex items-center gap-3">
+          <span class="text-2xl">{{ achievementIcon }}</span>
+          <div>
+            <p class="text-xs text-white/50">恭喜達成成就</p>
+            <p class="font-bold text-white">{{ achievementTitle }}</p>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Modals -->
     <NameInputModal
@@ -405,6 +643,16 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       :initialValue="player.name"
       @submit="onSubmitName"
       @cancel="backToStart"
+    />
+
+    <!-- Day 7 密碼顯示前的名字輸入 -->
+    <NameInputModal
+      v-if="showDay7NameModal"
+      title="在解鎖序號前，請先告訴我你的名字"
+      placeholder="輸入你的名字"
+      :initialValue="player.name"
+      @submit="onDay7NameSubmit"
+      @cancel="onDay7NameCancel"
     />
 
     <SlidesModal
@@ -440,3 +688,25 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
     />
   </div>
 </template>
+
+<style scoped>
+.pb-safe-bottom {
+  padding-bottom: max(1.5rem, env(safe-area-inset-bottom));
+}
+
+/* 成就提示動畫 */
+.achievement-enter-active,
+.achievement-leave-active {
+  transition: all 0.3s ease;
+}
+
+.achievement-enter-from {
+  opacity: 0;
+  transform: translateX(100px);
+}
+
+.achievement-leave-to {
+  opacity: 0;
+  transform: translateX(100px);
+}
+</style>
