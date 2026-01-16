@@ -8,6 +8,7 @@ import { usePlayerStore } from '../stores/player'
 import { useProgressStore } from '../stores/progress'
 import { generatePassword } from '../utils/cipher'
 import { endings, type EndingType } from '../config/endings'
+import { MAX_AVAILABLE_CHAPTER } from '../config/game'
 import NameInputModal from '../components/NameInputModal.vue'
 import SlidesModal from '../components/SlidesModal.vue'
 import QuizModal from '../components/QuizModal.vue'
@@ -26,9 +27,17 @@ const chapterId = computed(() => Number(route.params.id) || 1)
 // 取得章節配置
 const chapter = computed(() => getChapter(chapterId.value))
 
-// 如果章節不存在，導向首頁
+// 如果章節不存在或尚未開放，導向首頁
 watch(chapter, (c) => {
-  if (!c) router.push({ name: 'start' })
+  // 章節不存在
+  if (!c) {
+    router.push({ name: 'start' })
+    return
+  }
+  // 遊戲章節 (id <= 100) 且超過開放範圍
+  if (chapterId.value <= 100 && chapterId.value > MAX_AVAILABLE_CHAPTER) {
+    router.push({ name: 'start' })
+  }
 }, { immediate: true })
 
 // 當章節改變時（例如從第一關進入第二關），重新初始化對話
@@ -331,6 +340,13 @@ function onCelebrationClose() {
 
   // 檢查是否有下一關
   const nextChapterId = chapterId.value + 1
+
+  // 如果已經是最後開放的關卡，回到首頁
+  if (chapterId.value >= MAX_AVAILABLE_CHAPTER) {
+    router.push({ name: 'start' })
+    return
+  }
+
   if (chapters[nextChapterId]) {
     // 有下一關，直接進入
     router.push({ name: 'chapter', params: { id: String(nextChapterId) } })

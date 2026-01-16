@@ -5,6 +5,7 @@ import { usePlayerStore } from '../stores/player'
 import { useProgressStore } from '../stores/progress'
 import { chapters } from '../content/chapters'
 import { getEndingChapterId } from '../config/endings'
+import { MAX_AVAILABLE_CHAPTER, TOTAL_CHAPTERS, CHAPTERS_FOR_ENDING } from '../config/game'
 import LogoThreeFx from '../components/LogoThreeFx.vue'
 
 const router = useRouter()
@@ -21,7 +22,7 @@ onMounted(() => {
 const canContinue = computed(() => !!player.name)
 
 // 遊戲章節最大 ID（不含結局）
-const maxGameChapterId = 10
+const maxGameChapterId = TOTAL_CHAPTERS
 
 // 確保 currentChapter 不超過遊戲章節
 const displayChapter = computed(() => Math.min(progress.currentChapter, maxGameChapterId))
@@ -52,9 +53,9 @@ function resetAll() {
 // 章節選單
 const showChapterSelect = ref(false)
 const chapterList = computed(() => {
-  // 只顯示遊戲章節 (id 1-10)，排除結局章節 (id >= 100)
+  // 只顯示目前開放的遊戲章節，排除結局章節 (id >= 100)
   return Object.values(chapters)
-    .filter((ch) => ch.id <= 10)
+    .filter((ch) => ch.id <= MAX_AVAILABLE_CHAPTER)
     .map((ch) => {
       const score = progress.quizScores[ch.id]
       const isCompleted = progress.currentChapter > ch.id
@@ -87,8 +88,7 @@ function selectChapter(id: number) {
 
 // 結局是否解鎖（Day 4-10 都有分數紀錄）
 const isEndingUnlocked = computed(() => {
-  const requiredDays = [4, 5, 6, 7, 8, 9, 10]
-  return requiredDays.every(day => {
+  return CHAPTERS_FOR_ENDING.every(day => {
     const score = progress.quizScores[day]
     return score && score.total > 0
   })
