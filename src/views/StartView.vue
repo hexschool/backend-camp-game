@@ -4,7 +4,6 @@ import { useRouter } from 'vue-router'
 import { usePlayerStore } from '../stores/player'
 import { useProgressStore } from '../stores/progress'
 import { chapters } from '../content/chapters'
-import { generatePassword } from '../utils/cipher'
 import { getEndingChapterId } from '../config/endings'
 import LogoThreeFx from '../components/LogoThreeFx.vue'
 
@@ -112,71 +111,6 @@ function onKeyDown(e: KeyboardEvent) {
 
 onMounted(() => window.addEventListener('keydown', onKeyDown))
 onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
-
-// ====== 開發者模式 ======
-const showDevPanel = ref(false)
-const devClickCount = ref(0)
-let devClickTimer: ReturnType<typeof setTimeout> | null = null
-
-function onVersionClick() {
-  devClickCount.value++
-  if (devClickTimer) clearTimeout(devClickTimer)
-  devClickTimer = setTimeout(() => {
-    devClickCount.value = 0
-  }, 2000)
-
-  if (devClickCount.value >= 2) {
-    showDevPanel.value = true
-    devClickCount.value = 0
-  }
-}
-
-function closeDevPanel() {
-  showDevPanel.value = false
-}
-
-// 設定測試分數（Day 4-10 每天 10 題）
-function setTestScores(percentage: number) {
-  const correct = percentage === 100 ? 10 : percentage === 90 ? 9 : percentage === 80 ? 8 : 7
-  for (let day = 4; day <= 10; day++) {
-    progress.saveQuizScore(day, correct, 10)
-  }
-  // 同時設定為已通關狀態
-  progress.setCurrentChapter(11)
-}
-
-function setEndingTrue() {
-  setTestScores(100)
-}
-
-function setEndingNormal() {
-  setTestScores(90)
-}
-
-function setEndingBad() {
-  setTestScores(80)
-}
-
-function goToEnding() {
-  // 根據分數進入對應結局章節
-  const endingChapterId = getEndingChapterId(progress.endingType)
-  router.push({ name: 'chapter', params: { id: String(endingChapterId) } })
-}
-
-// Day 7 密碼（開發者用）
-const day7Password = computed(() => {
-  if (!player.name) return '(請先設定玩家名稱)'
-  return generatePassword(player.name)
-})
-
-const copySuccess = ref(false)
-function copyPassword() {
-  navigator.clipboard.writeText(day7Password.value)
-  copySuccess.value = true
-  setTimeout(() => {
-    copySuccess.value = false
-  }, 2000)
-}
 
 // 成就系統
 const showAchievementModal = ref(false)
@@ -306,11 +240,8 @@ function closeAchievementModal() {
           </button>
         </nav>
 
-        <!-- 版本資訊（連點 5 次開啟開發者模式） -->
-        <p
-          class="mt-6 cursor-default select-none text-center text-xs text-white/30 md:mt-8 md:text-left"
-          @click="onVersionClick"
-        >
+        <!-- 版本資訊 -->
+        <p class="mt-6 cursor-default select-none text-center text-xs text-white/30 md:mt-8 md:text-left">
           v1.0 · 2025 後端新手生存指南
         </p>
       </div>
@@ -398,99 +329,6 @@ function closeAchievementModal() {
         </div>
       </Transition>
 
-      <!-- 開發者模式面板 -->
-      <Transition name="fade">
-        <div
-          v-if="showDevPanel"
-          class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm"
-          @click.self="closeDevPanel"
-        >
-          <div class="mx-4 w-full max-w-md rounded-2xl border border-purple-500/30 bg-slate-900/95 p-6 shadow-2xl">
-            <div class="mb-4 flex items-center justify-between">
-              <h2 class="flex items-center gap-2 text-lg font-bold text-purple-400">
-                <span>🛠️</span>
-                <span>開發者模式</span>
-              </h2>
-              <button
-                class="rounded-full p-1 text-white/50 hover:bg-white/10 hover:text-white"
-                @click="closeDevPanel"
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
-              </button>
-            </div>
-
-            <!-- 目前狀態 -->
-            <div class="mb-4 rounded-lg bg-slate-800/50 p-3 text-sm">
-              <p class="text-white/50">目前結局分數：<span class="font-mono text-white">{{ progress.endingScore }}%</span></p>
-              <p class="text-white/50">結局類型：<span class="font-mono text-white">{{ progress.endingType }}</span></p>
-              <p class="text-white/50">Day 7 道具：<span :class="progress.hasDay7Item ? 'text-emerald-400' : 'text-rose-400'">{{ progress.hasDay7Item ? '✓ 已取得' : '✗ 未取得' }}</span></p>
-            </div>
-
-            <!-- Day 7 密碼 -->
-            <div class="mb-4 rounded-lg border border-amber-500/30 bg-amber-900/20 p-3">
-              <p class="mb-2 text-sm text-amber-400">🔑 Day 7 彩蛋密碼</p>
-              <div class="flex items-center gap-2">
-                <code class="flex-1 rounded bg-slate-800 px-3 py-2 font-mono text-sm text-white">{{ day7Password }}</code>
-                <button
-                  class="rounded-lg bg-amber-500/20 px-3 py-2 text-sm text-amber-400 transition-all hover:bg-amber-500/30"
-                  @click="copyPassword"
-                >
-                  {{ copySuccess ? '✓ 已複製' : '複製' }}
-                </button>
-              </div>
-            </div>
-
-            <p class="mb-3 text-sm text-white/50">快速設定結局分數（Day 4-10）：</p>
-
-            <div class="space-y-2">
-              <button
-                class="w-full rounded-xl border border-emerald-500/30 bg-emerald-900/20 px-4 py-3 text-left transition-all hover:border-emerald-400/50 hover:bg-emerald-900/40"
-                @click="setEndingTrue"
-              >
-                <span class="flex items-center justify-between">
-                  <span class="font-semibold text-emerald-400">🌟 完美結局 + 🔮 彩蛋結局</span>
-                  <span class="text-xs text-white/40">100%</span>
-                </span>
-              </button>
-
-              <button
-                class="w-full rounded-xl border border-sky-500/30 bg-sky-900/20 px-4 py-3 text-left transition-all hover:border-sky-400/50 hover:bg-sky-900/40"
-                @click="setEndingNormal"
-              >
-                <span class="flex items-center justify-between">
-                  <span class="font-semibold text-sky-400">🌑 普通結局「封印」</span>
-                  <span class="text-xs text-white/40">90%</span>
-                </span>
-              </button>
-
-              <button
-                class="w-full rounded-xl border border-rose-500/30 bg-rose-900/20 px-4 py-3 text-left transition-all hover:border-rose-400/50 hover:bg-rose-900/40"
-                @click="setEndingBad"
-              >
-                <span class="flex items-center justify-between">
-                  <span class="font-semibold text-rose-400">💀 壞結局「過勞」</span>
-                  <span class="text-xs text-white/40">80%</span>
-                </span>
-              </button>
-            </div>
-
-            <!-- 進入結局按鈕 -->
-            <div class="mt-3">
-              <button
-                class="w-full rounded-xl border border-purple-500/30 bg-purple-900/30 px-4 py-3 font-semibold text-purple-400 transition-all hover:border-purple-400/50 hover:bg-purple-900/50"
-                @click="goToEnding"
-              >
-                ▶ 進入結局畫面
-              </button>
-            </div>
-
-            <p class="mt-4 text-center text-xs text-white/30">點擊按鈕後會自動設定為已通關狀態</p>
-          </div>
-        </div>
-      </Transition>
     </Teleport>
 
     <!-- 成就 Modal -->
