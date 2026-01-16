@@ -121,12 +121,14 @@ function handleComplete() {
     </div>
 
     <!-- Main Content -->
-    <div class="relative flex flex-1 flex-col overflow-hidden">
-      <!-- 內容區域 slot -->
-      <slot />
+    <div class="relative flex min-h-0 flex-1 flex-col">
+      <!-- 內容區域 slot（可滾動） -->
+      <div class="flex-1 overflow-y-auto">
+        <slot />
+      </div>
 
-      <!-- 底部說明區 -->
-      <div class="border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl">
+      <!-- 底部說明區（固定在內容區底部） -->
+      <div class="shrink-0 border-t border-slate-800 bg-slate-900/80 backdrop-blur-xl">
         <div class="mx-auto max-w-4xl px-4 py-4 md:px-6 md:py-5">
           <h3 class="text-base font-bold text-white md:text-lg">{{ stepTitle }}</h3>
           <p class="mt-1 text-sm text-slate-400 md:text-base">{{ stepDesc }}</p>

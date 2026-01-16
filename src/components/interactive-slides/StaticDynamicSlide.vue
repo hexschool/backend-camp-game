@@ -186,7 +186,7 @@ function handleComplete() {
     </template>
 
     <!-- 主要內容區 -->
-    <div class="relative flex flex-1 flex-col overflow-hidden bg-gradient-to-br from-slate-900 via-slate-900 to-amber-900/20">
+    <div class="relative flex flex-1 flex-col overflow-y-auto bg-gradient-to-br from-slate-900 via-slate-900 to-amber-900/20">
       <!-- 浮動粒子背景 -->
       <div class="pointer-events-none absolute inset-0 overflow-hidden">
         <div class="animate-float-slow absolute left-[10%] top-[20%] h-2 w-2 rounded-full bg-amber-500/20"></div>
@@ -269,8 +269,8 @@ function handleComplete() {
       </div>
 
       <!-- ===== COMPARE VIEW ===== -->
-      <div v-else-if="stepData.view === 'compare'" class="relative flex flex-1 items-center justify-center p-4 md:p-8">
-        <div class="flex w-full max-w-4xl flex-col items-center gap-8 md:flex-row md:justify-center">
+      <div v-else-if="stepData.view === 'compare'" class="relative flex flex-1 items-start justify-center overflow-y-auto p-4 pt-2 md:items-center md:p-8">
+        <div class="flex w-full max-w-4xl flex-col items-center gap-4 md:flex-row md:gap-8 md:justify-center">
 
           <!-- 錯誤做法 -->
           <div
@@ -335,7 +335,7 @@ function handleComplete() {
       </div>
 
       <!-- ===== ARCHITECTURE VIEW ===== -->
-      <div v-else-if="stepData.view === 'architecture'" class="relative flex flex-1 items-center justify-center p-4 md:p-8">
+      <div v-else-if="stepData.view === 'architecture'" class="relative flex flex-1 items-start justify-center overflow-y-auto p-4 pt-2 md:items-center md:p-8">
         <div class="w-full max-w-5xl">
           <!-- 三欄架構圖 -->
           <div class="flex flex-col items-stretch gap-3 md:flex-row md:items-center md:gap-4">

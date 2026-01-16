@@ -73,7 +73,7 @@ function handleComplete() {
       </header>
 
       <!-- 互動簡報內容區 -->
-      <main class="flex-1 overflow-hidden">
+      <main class="flex-1 overflow-y-auto">
         <component
           v-if="SlideComponent"
           :is="SlideComponent"

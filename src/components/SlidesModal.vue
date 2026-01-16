@@ -54,7 +54,7 @@ function close() {
         </div>
       </header>
 
-      <div class="grid grid-cols-1 gap-3.5 p-3.5 md:grid-cols-[1.1fr_1fr]">
+      <div class="grid grid-cols-1 gap-3.5 overflow-y-auto p-3.5 md:grid-cols-[1.1fr_1fr]">
         <section>
           <div class="h-full rounded-2xl border border-slate-900/10 bg-white/70 p-3.5">
             <div class="inline-block rounded-full bg-amber-300/60 px-3 py-1 text-xs font-black text-slate-900">
