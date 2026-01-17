@@ -432,11 +432,17 @@ const canTriggerHidden = computed(() => {
 // 暗黑場景判斷（壞結局使用）
 const isDarkScene = computed(() => node.value?.scene === 'dark')
 
-// 場景圖片 - dark 場景使用 normal 圖片但會加上暗黑濾鏡
+// 隱藏海姐判斷（home 場景不顯示海姐）
+const shouldHideCoach = computed(() => {
+  const scene = node.value?.scene ?? 'normal'
+  return scene === 'dark' || scene === 'home'
+})
+
+// 場景圖片 - dark/home 場景使用 normal 圖片但會加上不同處理
 const sceneUrl = computed(() => {
   const scene = node.value?.scene ?? 'normal'
-  // dark 場景使用 normal 背景，透過 CSS 濾鏡處理
-  const actualScene = scene === 'dark' ? 'normal' : scene
+  // dark 和 home 場景使用 normal 背景，透過 CSS 濾鏡處理
+  const actualScene = (scene === 'dark' || scene === 'home') ? 'normal' : scene
   return `${import.meta.env.BASE_URL}images/scene/${actualScene}.png`
 })
 const coachUrl = computed(() => `${import.meta.env.BASE_URL}images/coach/${node.value?.coachExpression ?? 'normal'}.png`)
@@ -537,8 +543,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
     <!-- 中間內容區：flex-1 填滿剩餘空間，使用 justify-end 讓內容靠底部 -->
     <main class="relative z-10 flex flex-1 flex-col justify-end">
-      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide/choice/endingComplete/dark場景 時隱藏） -->
-      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal && !showEndingComplete && !isDarkScene" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
+      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide/choice/endingComplete/隱藏海姐場景 時隱藏） -->
+      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal && !showEndingComplete && !shouldHideCoach" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
         <img
           class="h-full w-auto max-w-[85vw] object-contain object-bottom"
           :src="coachUrl"
@@ -604,7 +610,36 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
           </button>
         </div>
 
-        <!-- 其他結局畫面 -->
+        <!-- 普通結局特殊畫面 -->
+        <div v-else-if="endingCompleteNode.endingType === 'normal'" class="ending-normal-fade w-full max-w-md rounded-2xl border border-sky-500/30 bg-slate-900/90 px-8 py-10 text-center backdrop-blur-md relative overflow-hidden">
+          <!-- 微光效果 -->
+          <div class="moon-glow absolute inset-0 pointer-events-none"></div>
+
+          <!-- 月亮圖示 -->
+          <div class="mb-4 flex flex-col items-center gap-2">
+            <div class="text-5xl moon-float">{{ endingCompleteNode.icon }}</div>
+          </div>
+
+          <p class="mb-2 text-lg font-semibold text-white/70">普通結局</p>
+          <h1 class="mb-2 text-4xl font-bold text-sky-400">
+            「{{ endingCompleteNode.title }}」
+          </h1>
+          <p class="mb-6 text-xl font-bold text-sky-300/80 tracking-widest">穩 健 前 行</p>
+          <div class="mx-auto max-w-sm rounded-xl border border-sky-900/50 bg-sky-950/30 px-6 py-4">
+            <p class="text-base text-white/90 leading-relaxed">
+              「你已經做得很好了，但你還沒學會這樣告訴自己。」
+            </p>
+          </div>
+          <p class="mt-6 text-sm text-white/50 italic">進入章節選擇，挑戰完美結局吧！</p>
+          <button
+            class="mt-4 rounded-xl border border-white/20 bg-slate-800/50 px-6 py-3 font-semibold text-white transition-all hover:border-white/40 hover:bg-slate-800"
+            @click="onEndingComplete"
+          >
+            繼續努力
+          </button>
+        </div>
+
+        <!-- 其他結局畫面（真結局、彩蛋結局） -->
         <div v-else class="w-full max-w-md rounded-2xl border border-white/20 bg-black/80 px-8 py-10 text-center backdrop-blur-md">
           <div class="mb-4 text-6xl">{{ endingCompleteNode.icon }}</div>
           <h1 class="mb-2 text-3xl font-bold text-white">
@@ -942,6 +977,51 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   }
   96% {
     text-shadow: none;
+  }
+}
+
+/* 普通結局動畫 */
+.ending-normal-fade {
+  animation: normal-fade-in 2s ease-out forwards;
+}
+
+@keyframes normal-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* 月亮微光效果 */
+.moon-glow {
+  background: radial-gradient(ellipse at 50% 30%, rgba(56, 189, 248, 0.1) 0%, transparent 60%);
+  animation: moon-pulse 4s ease-in-out infinite;
+}
+
+@keyframes moon-pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* 月亮浮動效果 */
+.moon-float {
+  animation: moon-float 6s ease-in-out infinite;
+}
+
+@keyframes moon-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-8px);
   }
 }
 </style>
