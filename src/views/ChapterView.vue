@@ -57,25 +57,51 @@ onMounted(() => {
   }
 })
 
-// 背景音樂
-const bgm = new Audio(`${import.meta.env.BASE_URL}audio/background.mp3`)
-bgm.loop = true
-bgm.volume = 0.1
+// 背景音樂 - 根據章節選擇對應音樂
+function getBgmPath(chapterId: number): string {
+  const base = import.meta.env.BASE_URL
+  // 結局章節使用對應的結局音樂
+  if (chapterId === 101) return `${base}audio/bgm-ending-bad.mp3`
+  if (chapterId === 102) return `${base}audio/bgm-ending-normal.mp3`
+  if (chapterId === 103) return `${base}audio/bgm-ending-true.mp3`
+  // 一般章節使用預設背景音樂
+  return `${base}audio/background.mp3`
+}
+
+const bgm = ref(new Audio(getBgmPath(chapterId.value)))
+bgm.value.loop = true
+bgm.value.volume = 0.1
 
 const isMusicPlaying = ref(false)
 
+// 監聽章節變化，切換對應音樂
+watch(chapterId, (newId) => {
+  const wasPlaying = isMusicPlaying.value
+  // 停止舊音樂
+  bgm.value.pause()
+  bgm.value.currentTime = 0
+  // 建立新音樂
+  bgm.value = new Audio(getBgmPath(newId))
+  bgm.value.loop = true
+  bgm.value.volume = 0.1
+  // 如果之前有播放，繼續播放新音樂
+  if (wasPlaying) {
+    bgm.value.play().catch(() => {})
+  }
+})
+
 function toggleMusic() {
   if (isMusicPlaying.value) {
-    bgm.pause()
+    bgm.value.pause()
   } else {
-    bgm.play().catch(() => {})
+    bgm.value.play().catch(() => {})
   }
   isMusicPlaying.value = !isMusicPlaying.value
 }
 
 onUnmounted(() => {
-  bgm.pause()
-  bgm.currentTime = 0
+  bgm.value.pause()
+  bgm.value.currentTime = 0
 })
 
 // 取得目前章節的節點陣列
@@ -403,7 +429,16 @@ const canTriggerHidden = computed(() => {
   return node?.canTriggerHidden === true
 })
 
-const sceneUrl = computed(() => `${import.meta.env.BASE_URL}images/scene/${node.value?.scene ?? 'normal'}.png`)
+// 暗黑場景判斷（壞結局使用）
+const isDarkScene = computed(() => node.value?.scene === 'dark')
+
+// 場景圖片 - dark 場景使用 normal 圖片但會加上暗黑濾鏡
+const sceneUrl = computed(() => {
+  const scene = node.value?.scene ?? 'normal'
+  // dark 場景使用 normal 背景，透過 CSS 濾鏡處理
+  const actualScene = scene === 'dark' ? 'normal' : scene
+  return `${import.meta.env.BASE_URL}images/scene/${actualScene}.png`
+})
 const coachUrl = computed(() => `${import.meta.env.BASE_URL}images/coach/${node.value?.coachExpression ?? 'normal'}.png`)
 
 const speakerLabel = computed(() => {
@@ -458,8 +493,14 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
   <div v-if="chapter" class="flex min-h-screen min-h-[100dvh] flex-col bg-slate-950 pt-14">
     <!-- 背景層（fixed 定位，不影響佈局） -->
     <div class="pointer-events-none fixed inset-0 z-0">
-      <div class="absolute inset-0 bg-cover bg-center scale-[1.02] saturate-95" :style="{ backgroundImage: `url(${sceneUrl})` }" />
-      <div class="absolute inset-0 bg-[radial-gradient(900px_500px_at_50%_90%,rgba(2,6,23,0),rgba(2,6,23,0.7))]" />
+      <!-- 一般場景背景 -->
+      <div v-if="!isDarkScene" class="absolute inset-0 bg-cover bg-center scale-[1.02] saturate-95" :style="{ backgroundImage: `url(${sceneUrl})` }" />
+      <div v-if="!isDarkScene" class="absolute inset-0 bg-[radial-gradient(900px_500px_at_50%_90%,rgba(2,6,23,0),rgba(2,6,23,0.7))]" />
+
+      <!-- 暗黑場景背景（壞結局用）：背景圖 + 陰暗濾鏡 + 緩慢閃爍效果 -->
+      <div v-if="isDarkScene" class="dark-bg-flicker absolute inset-0 bg-cover bg-center scale-[1.02] saturate-50" :style="{ backgroundImage: `url(${sceneUrl})` }" />
+      <!-- 暗角效果 -->
+      <div v-if="isDarkScene" class="dark-vignette absolute inset-0" />
     </div>
 
     <!-- 頂部導航列 -->
@@ -496,8 +537,8 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
     <!-- 中間內容區：flex-1 填滿剩餘空間，使用 justify-end 讓內容靠底部 -->
     <main class="relative z-10 flex flex-1 flex-col justify-end">
-      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide/choice/endingComplete 時隱藏） -->
-      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal && !showEndingComplete" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
+      <!-- 教練圖片區域：fixed 定位，底部貼齊對話框上緣（quiz/slides/celebration/interactiveSlide/choice/endingComplete/dark場景 時隱藏） -->
+      <div v-if="!dialogueImage && !showQuizModal && !showSlidesModal && !showCelebrationModal && !showInteractiveSlideModal && !showChoiceModal && !showEndingComplete && !isDarkScene" class="pointer-events-none fixed inset-x-0 z-0 flex items-end justify-center" style="top: 56px; bottom: 160px;">
         <img
           class="h-full w-auto max-w-[85vw] object-contain object-bottom"
           :src="coachUrl"
@@ -529,7 +570,42 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
       <!-- 結局完成畫面 -->
       <div v-if="showEndingComplete && endingCompleteNode" class="flex flex-1 flex-col items-center justify-center px-4">
-        <div class="mb-8 text-center">
+        <!-- 壞結局特殊畫面 -->
+        <div v-if="endingCompleteNode.endingType === 'bad'" class="ending-bad-fade w-full max-w-md rounded-2xl border border-rose-500/30 bg-black/80 px-8 py-10 text-center backdrop-blur-md relative overflow-hidden">
+          <!-- 靜態雜訊效果 -->
+          <div class="glitch-overlay absolute inset-0 pointer-events-none"></div>
+
+          <!-- 骷髏頭圖示 + 心電圖 -->
+          <div class="mb-4 flex flex-col items-center gap-2">
+            <div class="text-4xl">{{ endingCompleteNode.icon }}</div>
+            <div class="flex justify-center items-center text-rose-500/60">
+              <svg class="w-28 h-6" viewBox="0 0 120 30" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M0,15 L30,15 L35,5 L40,25 L45,10 L50,20 L55,15 L120,15" class="heartbeat-line" />
+              </svg>
+            </div>
+          </div>
+
+          <p class="mb-2 text-lg font-semibold text-white/70">壞結局</p>
+          <h1 class="mb-2 text-4xl font-bold text-rose-400 glitch-text">
+            「{{ endingCompleteNode.title }}」
+          </h1>
+          <p class="mb-6 text-xl font-bold text-rose-300/80 tracking-widest">燃 燒 殆 盡</p>
+          <div class="mx-auto max-w-sm rounded-xl border border-rose-900/50 bg-rose-950/30 px-6 py-4">
+            <p class="text-base text-white/90 leading-relaxed">
+              「你的身體比你誠實。它替你按下了那個你不敢按的暫停鍵。」
+            </p>
+          </div>
+          <p class="mt-6 text-sm text-white/50 italic">進入章節選擇，將每個關卡刷到完美吧！</p>
+          <button
+            class="mt-4 rounded-xl border border-white/20 bg-slate-800/50 px-6 py-3 font-semibold text-white transition-all hover:border-white/40 hover:bg-slate-800"
+            @click="onEndingComplete"
+          >
+            再試一次
+          </button>
+        </div>
+
+        <!-- 其他結局畫面 -->
+        <div v-else class="w-full max-w-md rounded-2xl border border-white/20 bg-black/80 px-8 py-10 text-center backdrop-blur-md">
           <div class="mb-4 text-6xl">{{ endingCompleteNode.icon }}</div>
           <h1 class="mb-2 text-3xl font-bold text-white">
             {{ endingCompleteNode.endingType === 'hidden' ? '達成彩蛋結局' : '結局' }}
@@ -546,27 +622,27 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
             「{{ endingCompleteNode.title }}」
           </p>
           <p class="mt-2 text-sm text-white/50">結局分數：{{ progress.endingScore }}%</p>
-        </div>
 
-        <!-- 彩蛋結局觸發按鈕（完美結局才顯示） -->
-        <div v-if="canTriggerHidden" class="text-center">
-          <p class="mb-4 text-white/60">等等...手機又響了？</p>
+          <!-- 彩蛋結局觸發按鈕（完美結局才顯示） -->
+          <div v-if="canTriggerHidden" class="mt-6 text-center">
+            <p class="mb-4 text-white/60">等等...手機又響了？</p>
+            <button
+              class="rounded-xl border border-amber-500/50 bg-amber-900/30 px-6 py-3 font-semibold text-amber-400 transition-all hover:border-amber-400 hover:bg-amber-900/50"
+              @click="onTriggerHiddenEnding"
+            >
+              查看新訊息
+            </button>
+          </div>
+
+          <!-- 返回首頁按鈕（非完美結局） -->
           <button
-            class="rounded-xl border border-amber-500/50 bg-amber-900/30 px-6 py-3 font-semibold text-amber-400 transition-all hover:border-amber-400 hover:bg-amber-900/50"
-            @click="onTriggerHiddenEnding"
+            v-if="!canTriggerHidden"
+            class="mt-6 rounded-xl border border-white/20 bg-slate-800/50 px-6 py-3 font-semibold text-white transition-all hover:border-white/40 hover:bg-slate-800"
+            @click="onEndingComplete"
           >
-            查看新訊息
+            返回首頁
           </button>
         </div>
-
-        <!-- 返回首頁按鈕（非完美結局） -->
-        <button
-          v-if="!canTriggerHidden"
-          class="mt-4 rounded-xl border border-white/20 bg-slate-800/50 px-6 py-3 font-semibold text-white transition-all hover:border-white/40 hover:bg-slate-800"
-          @click="onEndingComplete"
-        >
-          返回首頁
-        </button>
       </div>
 
       <!-- 對話框區域：在底部，內容多時往上長蓋住教練（quiz/slides/celebration/interactiveSlide/choice/endingComplete/passwordInput 時隱藏） -->
@@ -724,5 +800,148 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 .achievement-leave-to {
   opacity: 0;
   transform: translateX(100px);
+}
+
+/* 暗黑場景 - 背景緩慢閃爍（像眼睛快閉起來） */
+.dark-bg-flicker {
+  animation: bg-blink 6s ease-in-out infinite;
+}
+
+.dark-vignette {
+  background: radial-gradient(ellipse at center, transparent 0%, rgba(0, 0, 0, 0.85) 100%);
+  animation: vignette-blink 6s ease-in-out infinite;
+}
+
+@keyframes bg-blink {
+  0%, 100% {
+    filter: brightness(0.25);
+  }
+  /* 緩慢變亮一點（像眼睛稍微睜開） */
+  40% {
+    filter: brightness(0.35);
+  }
+  50% {
+    filter: brightness(0.4);
+  }
+  60% {
+    filter: brightness(0.35);
+  }
+  /* 緩慢變暗（像眼睛快閉上） */
+  80% {
+    filter: brightness(0.2);
+  }
+  90% {
+    filter: brightness(0.15);
+  }
+}
+
+@keyframes vignette-blink {
+  0%, 100% {
+    opacity: 1;
+  }
+  /* 眼睛睜開時暗角稍微減輕 */
+  50% {
+    opacity: 0.7;
+  }
+  /* 眼睛快閉上時暗角加重 */
+  90% {
+    opacity: 1.1;
+  }
+}
+
+/* 壞結局完成畫面動畫 */
+.ending-bad-fade {
+  animation: bad-fade-in 2s ease-out forwards;
+}
+
+@keyframes bad-fade-in {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ending-icon-pulse {
+  animation: icon-pulse 3s ease-in-out infinite;
+}
+
+@keyframes icon-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+/* 靜態雜訊效果 */
+.glitch-overlay {
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(255, 255, 255, 0.03) 2px,
+    rgba(255, 255, 255, 0.03) 4px
+  );
+  animation: glitch-noise 0.5s steps(10) infinite;
+}
+
+@keyframes glitch-noise {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 0.5; }
+}
+
+/* 心電圖動畫 - 重複播放 */
+.heartbeat-line {
+  stroke-dasharray: 200;
+  stroke-dashoffset: 200;
+  animation: draw-heartbeat 4s ease-in-out infinite;
+}
+
+@keyframes draw-heartbeat {
+  0% {
+    stroke-dashoffset: 200;
+    opacity: 0.3;
+  }
+  20% {
+    opacity: 1;
+  }
+  50% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  70% {
+    opacity: 0.5;
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0.3;
+  }
+}
+
+/* 故障文字效果 */
+.glitch-text {
+  animation: glitch 5s ease-in-out infinite;
+}
+
+@keyframes glitch {
+  0%, 90%, 100% {
+    text-shadow: none;
+  }
+  92% {
+    text-shadow: -2px 0 #ff0040, 2px 0 #00ffff;
+  }
+  94% {
+    text-shadow: 2px 0 #ff0040, -2px 0 #00ffff;
+  }
+  96% {
+    text-shadow: none;
+  }
 }
 </style>
