@@ -58,7 +58,8 @@ const chapterList = computed(() => {
     .filter((ch) => ch.id <= MAX_AVAILABLE_CHAPTER)
     .map((ch) => {
       const score = progress.quizScores[ch.id]
-      const isCompleted = progress.currentChapter > ch.id
+      // 使用 completedChapters 來判斷是否真正完成過該章節
+      const isCompleted = progress.isChapterCompleted(ch.id)
       return {
         id: ch.id,
         title: ch.title,
@@ -106,7 +107,8 @@ function onKeyDown(e: KeyboardEvent) {
     closeChapterSelect()
     return
   }
-  if (e.key === 'Enter') startNew()
+  // 有進度時 Enter 不觸發開始遊戲
+  if (e.key === 'Enter' && !canContinue.value) startNew()
 }
 
 onMounted(() => window.addEventListener('keydown', onKeyDown))
@@ -175,15 +177,17 @@ function closeAchievementModal() {
         <!-- 選單區塊 -->
         <nav class="space-y-2.5 md:space-y-3">
           <button
-            class="group relative w-full overflow-hidden rounded-xl border border-white/20 bg-slate-900/80 px-4 py-3.5 text-left font-bold text-white backdrop-blur-sm transition-all duration-200 hover:border-amber-400/40 hover:bg-slate-800/80 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-amber-400/50 md:px-5 md:py-4"
+            class="group relative w-full overflow-hidden rounded-xl border border-white/20 bg-slate-900/80 px-4 py-3.5 text-left font-bold text-white backdrop-blur-sm transition-all duration-200 hover:border-amber-400/40 hover:bg-slate-800/80 active:scale-[0.99] focus:outline-none focus:ring-2 focus:ring-amber-400/50 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-white/20 disabled:hover:bg-slate-900/80 md:px-5 md:py-4"
             type="button"
+            :disabled="canContinue"
             @click="startNew"
           >
             <span class="absolute left-0 top-0 h-full w-1 bg-gradient-to-b from-amber-400 to-amber-600" />
-            <span class="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100" />
+            <span class="absolute inset-0 bg-gradient-to-r from-amber-500/10 to-transparent opacity-0 transition-opacity group-hover:opacity-100 group-disabled:opacity-0" />
             <span class="relative flex items-center justify-between">
               <span class="text-base md:text-lg">開始遊戲</span>
-              <span class="hidden rounded bg-white/10 px-2 py-0.5 text-xs text-white/60 sm:inline-block">Enter</span>
+              <span v-if="canContinue" class="text-xs text-white/40">有進度</span>
+              <span v-else class="hidden rounded bg-white/10 px-2 py-0.5 text-xs text-white/60 sm:inline-block">Enter</span>
             </span>
           </button>
 

@@ -23,6 +23,7 @@ export const achievementDefinitions: Record<AchievementId, { icon: string; title
 type ProgressState = {
   currentChapter: number
   chapterNodeIndices: Record<number, number>
+  completedChapters: number[]  // 已完成的章節列表
   quizScores: Record<number, QuizScore>  // 每日測驗分數（key = chapter/day）
   hasDay7Item: boolean  // Day 7 解鎖道具（彩蛋結局用）
   achievements: AchievementId[]  // 已解鎖的成就
@@ -41,6 +42,7 @@ export const useProgressStore = defineStore('progress', {
   state: (): ProgressState => ({
     currentChapter: 1,
     chapterNodeIndices: { 1: 0 },
+    completedChapters: [],
     quizScores: {},
     hasDay7Item: false,
     achievements: [],
@@ -88,6 +90,10 @@ export const useProgressStore = defineStore('progress', {
     unlockedCount: (state) => state.achievements.length,
     // 總成就數量
     totalAchievements: () => Object.keys(achievementDefinitions).length,
+    // 檢查章節是否已完成
+    isChapterCompleted: (state) => (chapterId: number) => {
+      return state.completedChapters.includes(chapterId)
+    },
     // 判定結局類型
     endingType: (state): EndingType => {
       const days = [4, 5, 6, 7, 8, 9, 10]
@@ -147,6 +153,16 @@ export const useProgressStore = defineStore('progress', {
         if (Array.isArray(data.achievements)) {
           this.achievements = data.achievements
         }
+        if (Array.isArray(data.completedChapters)) {
+          this.completedChapters = data.completedChapters
+        } else {
+          // 向後相容：舊存檔沒有 completedChapters，根據 currentChapter 補上
+          // 假設 currentChapter 之前的章節都已完成
+          this.completedChapters = []
+          for (let i = 1; i < this.currentChapter && i <= 10; i++) {
+            this.completedChapters.push(i)
+          }
+        }
         // 向後相容舊格式
         if ('chapter1NodeIndex' in data && typeof (data as { chapter1NodeIndex?: number }).chapter1NodeIndex === 'number') {
           this.chapterNodeIndices[1] = (data as { chapter1NodeIndex: number }).chapter1NodeIndex
@@ -173,6 +189,18 @@ export const useProgressStore = defineStore('progress', {
     },
     // 完成章節，解鎖下一章
     completeChapter(chapterId: number) {
+      // 標記該章節為已完成
+      if (!this.completedChapters.includes(chapterId)) {
+        this.completedChapters.push(chapterId)
+      }
+      // 當完成 Day 4 時，自動將 Day 1-3 標記為完成（跳關玩家的向後相容）
+      if (chapterId === 4) {
+        for (const day of [1, 2, 3]) {
+          if (!this.completedChapters.includes(day)) {
+            this.completedChapters.push(day)
+          }
+        }
+      }
       const nextChapter = chapterId + 1
       this.currentChapter = nextChapter
       if (!(nextChapter in this.chapterNodeIndices)) {
@@ -208,6 +236,7 @@ export const useProgressStore = defineStore('progress', {
     reset() {
       this.currentChapter = 1
       this.chapterNodeIndices = { 1: 0 }
+      this.completedChapters = []
       this.quizScores = {}
       this.hasDay7Item = false
       // 成就不重置，保留玩家的解鎖紀錄
@@ -217,6 +246,7 @@ export const useProgressStore = defineStore('progress', {
     resetAll() {
       this.currentChapter = 1
       this.chapterNodeIndices = { 1: 0 }
+      this.completedChapters = []
       this.quizScores = {}
       this.hasDay7Item = false
       this.achievements = []
@@ -226,6 +256,7 @@ export const useProgressStore = defineStore('progress', {
       localStorage.setItem(STORAGE_KEY, JSON.stringify({
         currentChapter: this.currentChapter,
         chapterNodeIndices: this.chapterNodeIndices,
+        completedChapters: this.completedChapters,
         quizScores: this.quizScores,
         hasDay7Item: this.hasDay7Item,
         achievements: this.achievements,
