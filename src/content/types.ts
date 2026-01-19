@@ -8,6 +8,8 @@ export type DialogueNode = {
   coachExpression: string
   image?: string
   showSaveHint?: boolean
+  /** 條件顯示：只有符合指定條件時才會顯示此對話 */
+  condition?: 'sqlPerfect'
 }
 
 export type InputNameNode = {

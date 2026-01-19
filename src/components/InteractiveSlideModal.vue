@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { computed, defineAsyncComponent, ref, onMounted, onUnmounted } from 'vue'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   slideId: string
   title: string
-}>()
+  isMusicPlaying?: boolean
+}>(), {
+  isMusicPlaying: false,
+})
 
 export type SqlPracticeResult = {
   score: number
@@ -15,6 +18,8 @@ export type SqlPracticeResult = {
 const emit = defineEmits<{
   (e: 'close'): void
   (e: 'sqlPracticeComplete', result: SqlPracticeResult): void
+  (e: 'toggleMusic'): void
+  (e: 'switchToEndingMusic'): void
 }>()
 
 // === RWD 偵測 ===
@@ -55,11 +60,17 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   'database-access': defineAsyncComponent(() => import('./interactive-slides/DatabaseAccessSlide.vue')),
   'sql-practice': defineAsyncComponent(() => import('./interactive-slides/SqlPracticeSlide.vue')),
   'sql-basics': defineAsyncComponent(() => import('./interactive-slides/SqlBasicsSlide.vue')),
+  'video-message': defineAsyncComponent(() => import('./interactive-slides/VideoMessageSlide.vue')),
   // 之後新增更多簡報時，在這裡註冊
 }
 
 const SlideComponent = computed(() => {
   return slideComponents[props.slideId] || null
+})
+
+// 全螢幕沉浸式簡報（隱藏 Header）
+const isFullscreenSlide = computed(() => {
+  return ['video-message'].includes(props.slideId)
 })
 
 function handleComplete(result?: SqlPracticeResult) {
@@ -73,7 +84,27 @@ function handleComplete(result?: SqlPracticeResult) {
 
 <template>
   <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
-    <div class="relative flex h-[95vh] w-[95vw] max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-100 shadow-2xl">
+    <!-- 全螢幕沉浸式模式 -->
+    <div
+      v-if="isFullscreenSlide"
+      class="relative h-full w-full overflow-hidden bg-black"
+    >
+      <component
+        v-if="SlideComponent"
+        :is="SlideComponent"
+        :isMobile="isMobile"
+        :isMusicPlaying="isMusicPlaying"
+        @complete="handleComplete"
+        @toggleMusic="emit('toggleMusic')"
+        @switchToEndingMusic="emit('switchToEndingMusic')"
+      />
+    </div>
+
+    <!-- 一般模式（有 Header） -->
+    <div
+      v-else
+      class="relative flex h-[95vh] w-[95vw] max-w-7xl flex-col overflow-hidden rounded-2xl border border-white/10 bg-slate-100 shadow-2xl"
+    >
       <!-- Header -->
       <header class="flex items-center justify-between border-b border-slate-200 bg-white px-6 py-4">
         <h2 class="text-lg font-bold text-slate-800">{{ title }}</h2>

@@ -2,7 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { getChapter, chapters } from '../content/chapters'
-import type { ChapterNode, InputNameNode, SlidesNode, QuizNode, CelebrationNode, InteractiveSlideNode, ChoiceNode, ChoiceOption, PasswordInputNode, EndingCompleteNode } from '../content/types'
+import type { ChapterNode, InputNameNode, SlidesNode, QuizNode, CelebrationNode, InteractiveSlideNode, ChoiceNode, ChoiceOption, PasswordInputNode, EndingCompleteNode, DialogueNode } from '../content/types'
 import { verifyPassword } from '../utils/cipher'
 import { usePlayerStore } from '../stores/player'
 import { useProgressStore } from '../stores/progress'
@@ -58,12 +58,14 @@ onMounted(() => {
 })
 
 // 背景音樂 - 根據章節選擇對應音樂
-function getBgmPath(chapterId: number): string {
+// 完美結局 (103) 一開始用一般背景音樂，等到影片簡報才切換
+function getBgmPath(chapterId: number, useEndingMusic = false): string {
   const base = import.meta.env.BASE_URL
   // 結局章節使用對應的結局音樂
   if (chapterId === 101) return `${base}audio/bgm-ending-bad.mp3`
   if (chapterId === 102) return `${base}audio/bgm-ending-normal.mp3`
-  if (chapterId === 103) return `${base}audio/bgm-ending-true.mp3`
+  // 完美結局：只有指定 useEndingMusic 時才用結局音樂
+  if (chapterId === 103 && useEndingMusic) return `${base}audio/bgm-ending-true.mp3`
   // 一般章節使用預設背景音樂
   return `${base}audio/background.mp3`
 }
@@ -99,6 +101,27 @@ function toggleMusic() {
   isMusicPlaying.value = !isMusicPlaying.value
 }
 
+// 是否已切換到結局音樂（避免重複切換）
+const hasSwichedToEndingMusic = ref(false)
+
+// 切換到結局音樂（用於完美結局的影片簡報）
+function switchToEndingMusic() {
+  if (chapterId.value !== 103) return
+  // 避免重複切換
+  if (hasSwichedToEndingMusic.value) return
+  hasSwichedToEndingMusic.value = true
+
+  bgm.value.pause()
+  bgm.value.currentTime = 0
+  bgm.value = new Audio(getBgmPath(103, true))
+  bgm.value.loop = true
+  bgm.value.volume = 0.1
+
+  // 自動開啟音樂（影片體驗）
+  bgm.value.play().catch(() => {})
+  isMusicPlaying.value = true
+}
+
 onUnmounted(() => {
   bgm.value.pause()
   bgm.value.currentTime = 0
@@ -107,11 +130,27 @@ onUnmounted(() => {
 // 取得目前章節的節點陣列
 const nodes = computed(() => chapter.value?.nodes ?? [])
 
+// Chapter 103 使用本地索引（不儲存進度，每次進入從頭開始）
+const localNodeIndex = ref(0)
+
 // 取得目前節點索引
 const nodeIndex = computed(() => {
+  // Chapter 103 不儲存進度，使用本地索引
+  if (chapterId.value === 103) {
+    return Math.min(localNodeIndex.value, nodes.value.length - 1)
+  }
   const idx = progress.getNodeIndex(chapterId.value)
   return Math.min(idx, nodes.value.length - 1)
 })
+
+// 設定節點索引（Chapter 103 不儲存到 localStorage）
+function setNodeIndex(chapterId: number, idx: number) {
+  if (chapterId === 103) {
+    localNodeIndex.value = idx
+  } else {
+    progress.setNodeIndex(chapterId, idx)
+  }
+}
 
 const node = computed<ChapterNode>(() => nodes.value[nodeIndex.value]!)
 
@@ -275,7 +314,7 @@ function onDay7NameCancel() {
   // 取消的話回到上一個節點
   showDay7NameModal.value = false
   const prevIdx = Math.max(nodeIndex.value - 1, 0)
-  progress.setNodeIndex(chapterId.value, prevIdx)
+  setNodeIndex(chapterId.value, prevIdx)
   enterNode(nodes.value[prevIdx]!)
 }
 
@@ -283,17 +322,42 @@ onMounted(() => {
   if (node.value) enterNode(node.value)
 })
 
+// 檢查節點是否符合條件（用於條件對話）
+function shouldShowNode(n: ChapterNode): boolean {
+  if (n.type === 'dialogue' && (n as DialogueNode).condition) {
+    const condition = (n as DialogueNode).condition
+    if (condition === 'sqlPerfect') {
+      // 只有 SQL 練習完美通過時才顯示
+      return sqlPracticeResult.value?.isPerfect === true
+    }
+  }
+  return true
+}
+
+// 找到下一個應該顯示的節點索引（跳過不符合條件的節點）
+function findNextVisibleNodeIndex(fromIdx: number): number {
+  let nextIdx = fromIdx
+  while (nextIdx < nodes.value.length - 1) {
+    nextIdx++
+    if (shouldShowNode(nodes.value[nextIdx]!)) {
+      return nextIdx
+    }
+  }
+  return nodes.value.length - 1
+}
+
 function advance() {
   if (node.value?.type !== 'dialogue') return
-  const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  const nextIdx = findNextVisibleNodeIndex(nodeIndex.value)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
-// 找到上一個可回退的對話節點（跳過 inputName、slides、quiz）
+// 找到上一個可回退的對話節點（跳過 inputName、slides、quiz 以及不符合條件的節點）
 function findPrevDialogueIndex(currentIdx: number): number {
   for (let i = currentIdx - 1; i >= 0; i--) {
-    if (nodes.value[i]?.type === 'dialogue') return i
+    const n = nodes.value[i]
+    if (n?.type === 'dialogue' && shouldShowNode(n)) return i
   }
   return -1
 }
@@ -307,7 +371,7 @@ function goBack() {
   if (node.value?.type !== 'dialogue') return
   const prevIdx = findPrevDialogueIndex(nodeIndex.value)
   if (prevIdx >= 0) {
-    progress.setNodeIndex(chapterId.value, prevIdx)
+    setNodeIndex(chapterId.value, prevIdx)
     enterNode(nodes.value[prevIdx]!)
   }
 }
@@ -319,19 +383,27 @@ function backToStart() {
 function onSubmitName(name: string) {
   player.setName(name)
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
 function onSlidesClose() {
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
 function onInteractiveSlideClose() {
+  // 如果是 video-message（彩蛋影片），直接回到首頁
+  if (interactiveSlideNode.value?.slideId === 'video-message') {
+    // 解鎖彩蛋結局成就
+    showHiddenEndingAchievement()
+    router.push({ name: 'start' })
+    return
+  }
+
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
@@ -349,7 +421,7 @@ function onSqlPracticeComplete(result: SqlPracticeResult) {
 function onChoiceSelect(_option: ChoiceOption) {
   // 選擇完成後，進入下一個節點
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
@@ -358,14 +430,14 @@ function onQuizDone(payload: { correctCount: number; total: number; firstAttempt
   progress.saveQuizScore(chapterId.value, payload.firstAttemptCorrect, payload.total)
 
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
 function onQuizCancel() {
   // 回到上一個對話節點
   const prevIdx = Math.max(nodeIndex.value - 1, 0)
-  progress.setNodeIndex(chapterId.value, prevIdx)
+  setNodeIndex(chapterId.value, prevIdx)
   enterNode(nodes.value[prevIdx]!)
 }
 
@@ -417,7 +489,7 @@ function onPasswordSubmit() {
     showHiddenEndingAchievement()
     // 進入下一個節點
     const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-    progress.setNodeIndex(chapterId.value, nextIdx)
+    setNodeIndex(chapterId.value, nextIdx)
     enterNode(nodes.value[nextIdx]!)
   } else {
     passwordError.value = '密碼錯誤，請再試一次'
@@ -431,8 +503,10 @@ function onEndingComplete() {
 
 // 觸發彩蛋結局（繼續到下一個節點）
 function onTriggerHiddenEnding() {
+  // 切換到結局音樂
+  switchToEndingMusic()
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
-  progress.setNodeIndex(chapterId.value, nextIdx)
+  setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
 }
 
@@ -446,18 +520,24 @@ const canTriggerHidden = computed(() => {
 // 暗黑場景判斷（壞結局使用）
 const isDarkScene = computed(() => node.value?.scene === 'dark')
 
-// 隱藏海姐判斷（home 場景不顯示海姐）
+// 隱藏海姐判斷（home/end 場景不顯示海姐）
 const shouldHideCoach = computed(() => {
   const scene = node.value?.scene ?? 'normal'
-  return scene === 'dark' || scene === 'home'
+  return scene === 'dark' || scene === 'home' || scene === 'end'
 })
 
-// 場景圖片 - dark/home 場景使用 normal 圖片但會加上不同處理
+// 場景圖片 - dark/home 場景使用 normal 圖片，end 場景使用 end.png
 const sceneUrl = computed(() => {
   const scene = node.value?.scene ?? 'normal'
   // dark 和 home 場景使用 normal 背景，透過 CSS 濾鏡處理
-  const actualScene = (scene === 'dark' || scene === 'home') ? 'normal' : scene
-  return `${import.meta.env.BASE_URL}images/scene/${actualScene}.png`
+  if (scene === 'dark' || scene === 'home') {
+    return `${import.meta.env.BASE_URL}images/scene/normal.png`
+  }
+  // end 場景使用 end.png
+  if (scene === 'end') {
+    return `${import.meta.env.BASE_URL}images/scene/end.png`
+  }
+  return `${import.meta.env.BASE_URL}images/scene/${scene}.png`
 })
 const coachUrl = computed(() => `${import.meta.env.BASE_URL}images/coach/${node.value?.coachExpression ?? 'normal'}.png`)
 
@@ -670,16 +750,15 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
           >
             「{{ endingCompleteNode.title }}」
           </p>
-          <p class="mt-2 text-sm text-white/50">結局分數：{{ progress.endingScore }}%</p>
 
           <!-- 彩蛋結局觸發按鈕（完美結局才顯示） -->
           <div v-if="canTriggerHidden" class="mt-6 text-center">
-            <p class="mb-4 text-white/60">等等...手機又響了？</p>
+            <p class="mb-4 text-white/60">下班後，你手機收到一封 Email...</p>
             <button
               class="rounded-xl border border-amber-500/50 bg-amber-900/30 px-6 py-3 font-semibold text-amber-400 transition-all hover:border-amber-400 hover:bg-amber-900/50"
               @click="onTriggerHiddenEnding"
             >
-              查看新訊息
+              查看 Email
             </button>
           </div>
 
@@ -818,8 +897,11 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       v-if="showInteractiveSlideModal && interactiveSlideNode"
       :slideId="interactiveSlideNode.slideId"
       :title="interactiveSlideNode.title"
+      :isMusicPlaying="isMusicPlaying"
       @close="onInteractiveSlideClose"
       @sqlPracticeComplete="onSqlPracticeComplete"
+      @toggleMusic="toggleMusic"
+      @switchToEndingMusic="switchToEndingMusic"
     />
 
     <ChoiceModal

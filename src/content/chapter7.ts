@@ -288,6 +288,48 @@ const nodes: ChapterNode[] = [
     coachExpression: 'praise',
   },
 
+  // ===== 100% 完美時的隱藏對話 =====
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '(突然想起什麼) 對了！剛剛給你的那組神秘序號...',
+    scene: 'normal',
+    coachExpression: 'normal',
+    condition: 'sqlPerfect',
+  },
+  {
+    type: 'dialogue',
+    speaker: '你',
+    text: '那組序號是做什麼用的？',
+    scene: 'normal',
+    coachExpression: 'normal',
+    condition: 'sqlPerfect',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '(抓抓頭) 呃...我忘了。',
+    scene: 'normal',
+    coachExpression: 'normal',
+    condition: 'sqlPerfect',
+  },
+  {
+    type: 'dialogue',
+    speaker: '你',
+    text: '...蛤？',
+    scene: 'normal',
+    coachExpression: 'normal',
+    condition: 'sqlPerfect',
+  },
+  {
+    type: 'dialogue',
+    speaker: '海克絲',
+    text: '(尷尬) 總之先記好！說不定之後會用到！',
+    scene: 'normal',
+    coachExpression: 'praise',
+    condition: 'sqlPerfect',
+  },
+
   // ===== 結尾對話 =====
   {
     type: 'dialogue',

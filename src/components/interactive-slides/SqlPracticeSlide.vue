@@ -437,6 +437,20 @@ function submitName() {
   }
 }
 
+// 複製密碼到剪貼簿
+const copySuccess = ref(false)
+async function copyPassword() {
+  try {
+    await navigator.clipboard.writeText(secretPassword.value)
+    copySuccess.value = true
+    setTimeout(() => {
+      copySuccess.value = false
+    }, 2000)
+  } catch (err) {
+    console.error('複製失敗:', err)
+  }
+}
+
 const currentQuestion = computed(() => QUESTIONS[currentQuestionIndex.value])
 const totalQuestions = computed(() => QUESTIONS.length)
 
@@ -883,7 +897,6 @@ watch(currentQuestionIndex, () => {
                       type="text"
                       placeholder="輸入你的名字"
                       class="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
-                      @keyup.enter="submitName"
                     />
                     <button
                       class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
@@ -898,8 +911,17 @@ watch(currentQuestionIndex, () => {
                 <!-- 已有名字，顯示密碼 -->
                 <div v-else class="mt-3 rounded-lg bg-slate-900/50 p-3 text-center">
                   <div class="text-xs text-slate-400">記住這組密碼，之後會用到：</div>
-                  <div class="mt-1 font-mono text-lg font-bold tracking-wider text-amber-400">
-                    {{ secretPassword }}
+                  <div class="mt-2 flex items-center justify-center gap-2">
+                    <div class="font-mono text-lg font-bold tracking-wider text-amber-400">
+                      {{ secretPassword }}
+                    </div>
+                    <button
+                      class="rounded-lg px-2 py-1 text-xs transition-colors"
+                      :class="copySuccess ? 'bg-emerald-500/30 text-emerald-400' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'"
+                      @click="copyPassword"
+                    >
+                      {{ copySuccess ? '已複製 ✓' : '複製' }}
+                    </button>
                   </div>
                 </div>
               </div>
