@@ -13,7 +13,7 @@ import NameInputModal from '../components/NameInputModal.vue'
 import SlidesModal from '../components/SlidesModal.vue'
 import QuizModal from '../components/QuizModal.vue'
 import CelebrationModal from '../components/CelebrationModal.vue'
-import InteractiveSlideModal from '../components/InteractiveSlideModal.vue'
+import InteractiveSlideModal, { type SqlPracticeResult } from '../components/InteractiveSlideModal.vue'
 import ChoiceModal from '../components/ChoiceModal.vue'
 
 const route = useRoute()
@@ -138,6 +138,9 @@ const endingCompleteNode = computed<EndingCompleteNode | null>(() => (node.value
 // 結局密碼輸入
 const passwordInput = ref('')
 const passwordError = ref('')
+
+// SQL 練習結果（Day 7 用）
+const sqlPracticeResult = ref<SqlPracticeResult | null>(null)
 
 // 是否為結局章節（id >= 100）
 const isEndingChapter = computed(() => chapterId.value >= 100)
@@ -330,6 +333,17 @@ function onInteractiveSlideClose() {
   const nextIdx = Math.min(nodeIndex.value + 1, nodes.value.length - 1)
   progress.setNodeIndex(chapterId.value, nextIdx)
   enterNode(nodes.value[nextIdx]!)
+}
+
+function onSqlPracticeComplete(result: SqlPracticeResult) {
+  // 儲存 SQL 練習結果
+  sqlPracticeResult.value = result
+  // 儲存分數到 progress store
+  progress.saveQuizScore(chapterId.value, result.score, result.total)
+  // 100% 答對時，解鎖 Day 7 隱藏道具
+  if (result.isPerfect) {
+    progress.setDay7Item(true)
+  }
 }
 
 function onChoiceSelect(_option: ChoiceOption) {
@@ -796,6 +810,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       v-if="showCelebrationModal && celebrationNode"
       :playerName="player.name || '你'"
       :chapterTitle="celebrationNode.chapterTitle"
+      :reward="chapterId === 7 && sqlPracticeResult?.isPerfect ? { icon: '🔑', title: '獲得隱藏道具！', description: '海克絲的神秘序號', code: generatePassword(player.name) } : undefined"
       @close="onCelebrationClose"
     />
 
@@ -804,6 +819,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       :slideId="interactiveSlideNode.slideId"
       :title="interactiveSlideNode.title"
       @close="onInteractiveSlideClose"
+      @sqlPracticeComplete="onSqlPracticeComplete"
     />
 
     <ChoiceModal

@@ -6,8 +6,15 @@ const props = defineProps<{
   title: string
 }>()
 
+export type SqlPracticeResult = {
+  score: number
+  total: number
+  isPerfect: boolean
+}
+
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'sqlPracticeComplete', result: SqlPracticeResult): void
 }>()
 
 // === RWD 偵測 ===
@@ -55,7 +62,11 @@ const SlideComponent = computed(() => {
   return slideComponents[props.slideId] || null
 })
 
-function handleComplete() {
+function handleComplete(result?: SqlPracticeResult) {
+  // 如果是 SQL 練習，傳遞分數資料
+  if (props.slideId === 'sql-practice' && result) {
+    emit('sqlPracticeComplete', result)
+  }
   emit('close')
 }
 </script>

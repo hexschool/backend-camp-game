@@ -528,12 +528,7 @@ function resetReview() {
             <div class="rounded-xl border border-slate-700 bg-slate-800 p-3">
               <div class="text-xs text-slate-500 mb-1">生成的 SQL：</div>
               <code class="font-mono text-lg">
-                <span class="text-purple-400">SELECT</span>
-                <span class="text-white">
-                  {{ selectedCols.length === 0 || selectedCols.length === currentTableCols.length ? '*' : selectedCols.map(i => currentTableCols[i]).join(', ') }}
-                </span>
-                <span class="text-blue-400"> FROM</span>
-                <span class="text-white"> {{ activeTable }}</span>
+                <span class="text-purple-400">SELECT</span>&nbsp;<span class="text-white">{{ selectedCols.length === 0 || selectedCols.length === currentTableCols.length ? '*' : selectedCols.map(i => currentTableCols[i]).join(', ') }}</span>&nbsp;<span class="text-blue-400">FROM</span>&nbsp;<span class="text-white">{{ activeTable }}</span>
               </code>
             </div>
 
@@ -707,10 +702,7 @@ function resetReview() {
             >
               <div class="rounded-xl border border-blue-500/30 bg-blue-500/10 p-4">
                 <div class="font-mono text-lg">
-                  <span class="text-purple-400">SELECT</span>
-                  <span class="text-white"> *</span>
-                  <span class="text-blue-400 font-bold"> FROM</span>
-                  <span class="text-white"> USER</span>
+                  <span class="text-purple-400">SELECT</span>&nbsp;<span class="text-white">*</span>&nbsp;<span class="text-blue-400 font-bold">FROM</span>&nbsp;<span class="text-white">USER</span>
                 </div>
                 <div class="mt-2 text-sm text-slate-400">
                   從 USER 表裡撈出所有資料
@@ -751,10 +743,7 @@ function resetReview() {
             <div class="rounded-xl border border-slate-700 bg-slate-800 p-3">
               <div class="text-xs text-slate-500 mb-1">生成的 SQL：</div>
               <code class="font-mono text-lg">
-                <span class="text-purple-400">SELECT</span>
-                <span class="text-white"> *</span>
-                <span class="text-blue-400"> FROM</span>
-                <span class="text-white font-bold"> {{ activeTable }}</span>
+                <span class="text-purple-400">SELECT</span>&nbsp;<span class="text-white">*</span>&nbsp;<span class="text-blue-400">FROM</span>&nbsp;<span class="text-white font-bold">{{ activeTable }}</span>
               </code>
             </div>
 
@@ -872,12 +861,7 @@ function resetReview() {
             <!-- SQL 範例 -->
             <div class="rounded-xl border border-sky-500/30 bg-sky-500/10 p-4">
               <div class="font-mono text-lg">
-                <span class="text-purple-400">SELECT</span>
-                <span class="text-white"> *</span>
-                <span class="text-blue-400"> FROM</span>
-                <span class="text-white"> USER</span>
-                <span class="text-sky-400 font-bold"> WHERE</span>
-                <span class="text-white"> role = 'coach'</span>
+                <span class="text-purple-400">SELECT</span>&nbsp;<span class="text-white">*</span>&nbsp;<span class="text-blue-400">FROM</span>&nbsp;<span class="text-white">USER</span>&nbsp;<span class="text-sky-400 font-bold">WHERE</span>&nbsp;<span class="text-white">role = 'coach'</span>
               </div>
               <div class="mt-2 text-sm text-slate-400">
                 只找出 role 是 'coach' 的會員

@@ -65,9 +65,9 @@ const STEPS: Step[] = [
   { id: 25, view: 'purchase_fields', title: '認識每個欄位', desc: '讓我們特別認識外來鍵欄位的用途！' },
   { id: 26, view: 'purchase_data', title: '王小明的購買紀錄', desc: 'user_id 和 credit_package_id 連到其他表。' },
   { id: 27, view: 'purchase_quiz', title: '小測驗', desc: 'user_id = 1 代表誰？' },
-  { id: 28, view: 'snapshot', title: '為什麼要「快照」？', desc: '記錄當時的價格，不受未來漲價影響。' },
+  { id: 28, view: 'snapshot', title: '為什麼要記錄「當時的價格」？', desc: '記錄當時的價格，不受未來漲價影響。' },
   // 第七章：總結
-  { id: 29, view: 'summary', title: '回顧 4 張資料表', desc: '我們學會了新增、修改、唯一約束、外來鍵、快照。' },
+  { id: 29, view: 'summary', title: '回顧 4 張資料表', desc: '我們學會了新增、修改、唯一約束、外來鍵。' },
   { id: 30, view: 'data_review', title: '資料總覽', desc: '來看看我們在這 4 張表裡加了哪些資料！' },
   { id: 31, view: 'congrats', title: '恭喜完成！', desc: '你已經看懂真實的資料庫了！' },
 ]
@@ -875,8 +875,8 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
               { name: 'id', desc: '紀錄編號（主鍵）' },
               { name: 'user_id', desc: '誰買的 → 對應 USER 表 ⭐', highlight: true },
               { name: 'credit_package_id', desc: '買哪個方案 → 對應 CREDIT_PACKAGE 表 ⭐', highlight: true },
-              { name: 'purchased_credits', desc: '買了幾堂（快照）' },
-              { name: 'price_paid', desc: '付了多少錢（快照）' },
+              { name: 'purchased_credits', desc: '買了幾堂（記錄當時的值）' },
+              { name: 'price_paid', desc: '付了多少錢（記錄當時的值）' },
               { name: 'created_at', desc: '資料建立時間' },
               { name: 'purchase_at', desc: '實際購買時間' }
             ]" :key="i" class="flex items-center gap-3 border-b border-slate-700 py-2 last:border-0 transition-all duration-300" :style="{ transitionDelay: `${i * 100}ms` }" :class="animState >= 1 ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'">
@@ -936,7 +936,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
                 <span class="rounded bg-purple-500/20 px-3 py-1 font-mono text-purple-400">price_paid</span>
                 <span class="text-lg font-bold text-white">付了多少錢</span>
               </div>
-              <p class="text-sm text-slate-400">記錄當時付了多少錢（快照！）</p>
+              <p class="text-sm text-slate-400">記錄當時付了多少錢</p>
             </div>
             <!-- created_at 欄位 -->
             <div class="rounded-xl border border-slate-700 bg-slate-800/50 p-4 transition-all duration-300" style="transition-delay: 500ms" :class="animState >= 2 ? 'translate-x-0 opacity-100' : '-translate-x-4 opacity-0'">
@@ -1033,7 +1033,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
       <div v-if="stepData.view === 'snapshot'" class="relative flex min-h-0 flex-1 flex-col items-center justify-center p-4 py-6">
         <div class="relative z-10 flex w-full max-w-xl flex-col items-center gap-4">
           <span class="rounded-full bg-purple-500/20 px-4 py-1 text-sm text-purple-400">🛒 CREDIT_PURCHASE</span>
-          <h2 class="text-xl font-bold text-white">為什麼要「快照」？</h2>
+          <h2 class="text-xl font-bold text-white">為什麼要記錄「當時的價格」？</h2>
           <div class="flex w-full items-start gap-4 transition-all duration-500" :class="animState >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
             <div class="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-2xl">👨‍💼</div>
             <div class="rounded-xl border border-slate-700 bg-slate-800 p-3">
@@ -1052,7 +1052,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
           <div class="w-full rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3">
             <p class="text-sm text-emerald-300">答案是 <strong>$2,520</strong>！</p>
             <p class="mt-1 text-sm text-emerald-300">我們記錄的是<span class="font-bold text-amber-400">「當時的價格」</span>，不是現在的價格</p>
-            <p class="mt-1 text-sm text-emerald-300/70">📸 這就叫做「快照」- 把那一刻的資料拍下來保存</p>
+            <p class="mt-1 text-sm text-emerald-300/70">📝 所以我們要把購買當下的價格記錄下來！</p>
           </div>
         </div>
       </div>
@@ -1080,7 +1080,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
               { icon: '✏️', text: '修改資料 = 改某一格' },
               { icon: '🔒', text: '唯一約束 = 不能重複' },
               { icon: '🔗', text: '外來鍵 = 連到別的表' },
-              { icon: '📸', text: '快照 = 記錄當時的值' }
+              { icon: '📝', text: '記錄當時的值 = 不受未來修改影響' }
             ]" :key="i" class="flex items-center gap-3 rounded-lg border border-slate-700 bg-slate-800/50 p-2">
               <span class="text-xl">{{ concept.icon }}</span>
               <span class="text-sm text-slate-300">{{ concept.text }}</span>
@@ -1100,7 +1100,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
             <!-- CREDIT_PACKAGE 表 -->
             <div class="rounded-xl border border-amber-500/30 bg-slate-800/50 p-3 transition-all duration-300" :class="animState >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
               <h4 class="mb-2 flex items-center gap-2 font-bold text-amber-400">
-                <span>💰</span> CREDIT_PACKAGE
+                <span>💰</span> CREDIT_PACKAGE <span class="text-xs font-normal text-slate-400">堂數方案表</span>
               </h4>
               <table class="w-full text-xs">
                 <thead>
@@ -1121,7 +1121,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
             <!-- SKILL 表 -->
             <div class="rounded-xl border border-green-500/30 bg-slate-800/50 p-3 transition-all duration-300" style="transition-delay: 100ms" :class="animState >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
               <h4 class="mb-2 flex items-center gap-2 font-bold text-green-400">
-                <span>🏋️</span> SKILL
+                <span>🏋️</span> SKILL <span class="text-xs font-normal text-slate-400">技能表</span>
               </h4>
               <table class="w-full text-xs">
                 <thead>
@@ -1141,7 +1141,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
             <!-- USER 表 -->
             <div class="rounded-xl border border-blue-500/30 bg-slate-800/50 p-3 transition-all duration-300" style="transition-delay: 200ms" :class="animState >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
               <h4 class="mb-2 flex items-center gap-2 font-bold text-blue-400">
-                <span>👤</span> USER
+                <span>👤</span> USER <span class="text-xs font-normal text-slate-400">會員表</span>
               </h4>
               <table class="w-full text-xs">
                 <thead>
@@ -1163,7 +1163,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
             <!-- CREDIT_PURCHASE 表 -->
             <div class="rounded-xl border border-purple-500/30 bg-slate-800/50 p-3 transition-all duration-300" style="transition-delay: 300ms" :class="animState >= 1 ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'">
               <h4 class="mb-2 flex items-center gap-2 font-bold text-purple-400">
-                <span>🛒</span> CREDIT_PURCHASE
+                <span>🛒</span> CREDIT_PURCHASE <span class="text-xs font-normal text-slate-400">購買紀錄表</span>
               </h4>
               <table class="w-full text-xs">
                 <thead>
@@ -1183,7 +1183,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
                   </tr>
                 </tbody>
               </table>
-              <p class="mt-2 text-xs text-slate-500">* 快照記錄了購買當時的價格</p>
+              <p class="mt-2 text-xs text-slate-500">* 記錄了購買當時的價格</p>
             </div>
           </div>
 
@@ -1211,7 +1211,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
               '了解新增和修改資料',
               '知道什麼是唯一約束',
               '理解外來鍵的用途',
-              '學會快照的概念'
+              '學會記錄當時的值'
             ]" :key="i" class="flex items-center gap-2 rounded-lg bg-emerald-500/10 p-2">
               <span class="text-emerald-400">✅</span>
               <span class="text-sm text-emerald-300">{{ item }}</span>

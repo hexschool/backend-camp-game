@@ -11,13 +11,15 @@
  * - 刪除資料
  */
 import { ref, computed, watch, onMounted } from 'vue'
+import { usePlayerStore } from '../../stores/player'
+import { generatePassword } from '../../utils/cipher'
 
 defineProps<{
   isMobile?: boolean
 }>()
 
 const emit = defineEmits<{
-  (e: 'complete'): void
+  (e: 'complete', data: { score: number; total: number; isPerfect: boolean }): void
 }>()
 
 // === 題目定義 ===
@@ -61,10 +63,10 @@ const QUESTIONS: Question[] = [
     expectedResult: '成功新增「28 堂組合包」方案',
     hint: 'INSERT INTO → 表名 → VALUES → (值)',
     tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
-      { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
-      { id: 'values', text: 'VALUES', type: 'keyword' },
       { id: 'vals', text: "('28 堂組合包', 28, 6000)", type: 'value' },
+      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
+      { id: 'values', text: 'VALUES', type: 'keyword' },
+      { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
     ],
     correctOrder: ['insert', 'table', 'values', 'vals'],
     table: 'CREDIT_PACKAGE',
@@ -88,12 +90,12 @@ const QUESTIONS: Question[] = [
     expectedResult: '14 堂組合包價格更新為 2,000 元',
     hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
     tokens: [
-      { id: 'update', text: 'UPDATE', type: 'keyword' },
-      { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
-      { id: 'set', text: 'SET', type: 'keyword' },
-      { id: 'assign', text: 'price = 2000', type: 'value' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
       { id: 'condition', text: 'id = 2', type: 'operator' },
+      { id: 'set', text: 'SET', type: 'keyword' },
+      { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
+      { id: 'where', text: 'WHERE', type: 'keyword' },
+      { id: 'update', text: 'UPDATE', type: 'keyword' },
+      { id: 'assign', text: 'price = 2000', type: 'value' },
     ],
     correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
     table: 'CREDIT_PACKAGE',
@@ -117,12 +119,12 @@ const QUESTIONS: Question[] = [
     expectedResult: '方案名稱更新為「新手體驗包」',
     hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
     tokens: [
+      { id: 'where', text: 'WHERE', type: 'keyword' },
+      { id: 'assign', text: "name = '新手體驗包'", type: 'value' },
       { id: 'update', text: 'UPDATE', type: 'keyword' },
+      { id: 'condition', text: 'id = 1', type: 'operator' },
       { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
       { id: 'set', text: 'SET', type: 'keyword' },
-      { id: 'assign', text: "name = '新手體驗包'", type: 'value' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
-      { id: 'condition', text: 'id = 1', type: 'operator' },
     ],
     correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
     table: 'CREDIT_PACKAGE',
@@ -146,10 +148,10 @@ const QUESTIONS: Question[] = [
     expectedResult: '成功刪除「21 堂組合包」',
     hint: 'DELETE FROM → 表名 → WHERE → 條件',
     tokens: [
-      { id: 'delete', text: 'DELETE FROM', type: 'keyword' },
-      { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
       { id: 'where', text: 'WHERE', type: 'keyword' },
+      { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
       { id: 'condition', text: 'id = 3', type: 'operator' },
+      { id: 'delete', text: 'DELETE FROM', type: 'keyword' },
     ],
     correctOrder: ['delete', 'table', 'where', 'condition'],
     table: 'CREDIT_PACKAGE',
@@ -173,10 +175,10 @@ const QUESTIONS: Question[] = [
     expectedResult: '成功新增「雙 11 限定包」',
     hint: 'INSERT INTO → 表名 → VALUES → (值)',
     tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
       { id: 'table', text: 'CREDIT_PACKAGE', type: 'table' },
-      { id: 'values', text: 'VALUES', type: 'keyword' },
       { id: 'vals', text: "('雙 11 限定包', 50, 9999)", type: 'value' },
+      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
+      { id: 'values', text: 'VALUES', type: 'keyword' },
     ],
     correctOrder: ['insert', 'table', 'values', 'vals'],
     table: 'CREDIT_PACKAGE',
@@ -192,22 +194,22 @@ const QUESTIONS: Question[] = [
   },
 
   // ==========================================
-  // 🏋️ SKILL 技能表 (5 題)
+  // 🏋️ SKILL 技能表 (2 題 - 只保留新增)
   // ==========================================
 
-  // === 第 6 題：新增技能 ===
+  // === 第 6 題：新增拳擊課程類別 ===
   {
     id: 6,
     type: 'INSERT',
-    scenario: '👨‍💼 老闆：「我們要新增一個課程：拳擊！」',
-    instruction: '新增技能到 SKILL（技能表）',
-    expectedResult: '成功新增「拳擊」技能',
+    scenario: '👨‍💼 老闆：「我們要新增一個課程類別：拳擊！」',
+    instruction: '新增課程類別到 SKILL（技能表）',
+    expectedResult: '成功新增「拳擊」課程類別',
     hint: 'INSERT INTO → 表名 → VALUES → (值)',
     tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
       { id: 'table', text: 'SKILL', type: 'table' },
-      { id: 'values', text: 'VALUES', type: 'keyword' },
       { id: 'vals', text: "('拳擊')", type: 'value' },
+      { id: 'values', text: 'VALUES', type: 'keyword' },
+      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
     ],
     correctOrder: ['insert', 'table', 'values', 'vals'],
     table: 'SKILL',
@@ -222,19 +224,19 @@ const QUESTIONS: Question[] = [
     resultRow: ['4', '拳擊'],
   },
 
-  // === 第 7 題：新增游泳技能 ===
+  // === 第 7 題：新增游泳課程類別 ===
   {
     id: 7,
     type: 'INSERT',
-    scenario: '🏊 老闆：「健身房新增泳池了！加一個游泳課程」',
-    instruction: '新增「游泳」技能到 SKILL 表',
-    expectedResult: '成功新增「游泳」技能',
+    scenario: '🏊 老闆：「健身房新增泳池了！加一個游泳課程類別」',
+    instruction: '新增「游泳」課程類別到 SKILL 表',
+    expectedResult: '成功新增「游泳」課程類別',
     hint: 'INSERT INTO → 表名 → VALUES → (值)',
     tokens: [
       { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
+      { id: 'vals', text: "('游泳')", type: 'value' },
       { id: 'table', text: 'SKILL', type: 'table' },
       { id: 'values', text: 'VALUES', type: 'keyword' },
-      { id: 'vals', text: "('游泳')", type: 'value' },
     ],
     correctOrder: ['insert', 'table', 'values', 'vals'],
     table: 'SKILL',
@@ -250,106 +252,23 @@ const QUESTIONS: Question[] = [
     resultRow: ['5', '游泳'],
   },
 
-  // === 第 8 題：修改技能名稱 ===
+  // ==========================================
+  // 👤 USER 會員表 (5 題)
+  // ==========================================
+
+  // === 第 8 題：新增會員 ===
   {
     id: 8,
-    type: 'UPDATE',
-    scenario: '✏️ 教練：「『有氧運動』改叫『飛輪有氧』比較潮！」',
-    instruction: '修改 id=3 的技能名稱',
-    expectedResult: '技能名稱更新為「飛輪有氧」',
-    hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
-    tokens: [
-      { id: 'update', text: 'UPDATE', type: 'keyword' },
-      { id: 'table', text: 'SKILL', type: 'table' },
-      { id: 'set', text: 'SET', type: 'keyword' },
-      { id: 'assign', text: "name = '飛輪有氧'", type: 'value' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
-      { id: 'condition', text: 'id = 3', type: 'operator' },
-    ],
-    correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
-    table: 'SKILL',
-    tableData: {
-      columns: ['id', 'name'],
-      rows: [
-        ['1', '重訓'],
-        ['2', '瑜伽'],
-        ['3', '有氧運動'],
-      ]
-    },
-    updateCell: { row: 2, col: 1, oldValue: '有氧運動', newValue: '飛輪有氧' },
-  },
-
-  // === 第 9 題：刪除技能 ===
-  {
-    id: 9,
-    type: 'DELETE',
-    scenario: '📢 公告：「瑜伽」課程因教練離職暫時停開！',
-    instruction: '從 SKILL 表刪除「瑜伽」',
-    expectedResult: '成功刪除「瑜伽」技能',
-    hint: 'DELETE FROM → 表名 → WHERE → 條件',
-    tokens: [
-      { id: 'delete', text: 'DELETE FROM', type: 'keyword' },
-      { id: 'table', text: 'SKILL', type: 'table' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
-      { id: 'condition', text: 'id = 2', type: 'operator' },
-    ],
-    correctOrder: ['delete', 'table', 'where', 'condition'],
-    table: 'SKILL',
-    tableData: {
-      columns: ['id', 'name'],
-      rows: [
-        ['1', '重訓'],
-        ['2', '瑜伽'],
-        ['3', '有氧運動'],
-      ]
-    },
-    deleteRow: 1,
-  },
-
-  // === 第 10 題：新增皮拉提斯 ===
-  {
-    id: 10,
-    type: 'INSERT',
-    scenario: '🧘 行銷：「皮拉提斯很夯！趕快加進去」',
-    instruction: '新增「皮拉提斯」技能',
-    expectedResult: '成功新增「皮拉提斯」',
-    hint: 'INSERT INTO → 表名 → VALUES → (值)',
-    tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
-      { id: 'table', text: 'SKILL', type: 'table' },
-      { id: 'values', text: 'VALUES', type: 'keyword' },
-      { id: 'vals', text: "('皮拉提斯')", type: 'value' },
-    ],
-    correctOrder: ['insert', 'table', 'values', 'vals'],
-    table: 'SKILL',
-    tableData: {
-      columns: ['id', 'name'],
-      rows: [
-        ['1', '重訓'],
-        ['2', '瑜伽'],
-        ['3', '有氧運動'],
-      ]
-    },
-    resultRow: ['4', '皮拉提斯'],
-  },
-
-  // ==========================================
-  // 👤 USER 會員表 (10 題)
-  // ==========================================
-
-  // === 第 11 題：新增會員 ===
-  {
-    id: 11,
     type: 'INSERT',
     scenario: '🎉 有新會員「陳大文」要加入 LiveFit！',
     instruction: '新增會員到 USER（會員表）',
     expectedResult: '成功新增會員「陳大文」',
     hint: 'INSERT INTO → 表名 → VALUES → (值)',
     tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
       { id: 'values', text: 'VALUES', type: 'keyword' },
+      { id: 'table', text: 'USER', type: 'table' },
       { id: 'vals', text: "('陳大文', 'chen@email.com', 'user', '密碼')", type: 'value' },
+      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
     ],
     correctOrder: ['insert', 'table', 'values', 'vals'],
     table: 'USER',
@@ -364,21 +283,21 @@ const QUESTIONS: Question[] = [
     resultRow: ['4', '陳大文', 'chen@email.com', 'user', '******'],
   },
 
-  // === 第 12 題：李燕容升級教練 ===
+  // === 第 9 題：李燕容升級教練 ===
   {
-    id: 12,
+    id: 9,
     type: 'UPDATE',
     scenario: '🎉 李燕容通過教練認證！要從「學員」升級成「教練」',
     instruction: '修改李燕容的 role 為 coach',
     expectedResult: '李燕容成功升級為教練',
     hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
     tokens: [
-      { id: 'update', text: 'UPDATE', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
       { id: 'set', text: 'SET', type: 'keyword' },
-      { id: 'assign', text: "role = 'coach'", type: 'value' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
       { id: 'condition', text: 'id = 2', type: 'operator' },
+      { id: 'update', text: 'UPDATE', type: 'keyword' },
+      { id: 'where', text: 'WHERE', type: 'keyword' },
+      { id: 'table', text: 'USER', type: 'table' },
+      { id: 'assign', text: "role = 'coach'", type: 'value' },
     ],
     correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
     table: 'USER',
@@ -393,48 +312,19 @@ const QUESTIONS: Question[] = [
     updateCell: { row: 1, col: 3, oldValue: 'user', newValue: 'coach' },
   },
 
-  // === 第 13 題：修改會員 email ===
+  // === 第 10 題：刪除會員 ===
   {
-    id: 13,
-    type: 'UPDATE',
-    scenario: '📧 王小明：「我換信箱了！請幫我更新」',
-    instruction: '修改 id=1 的會員 email',
-    expectedResult: '王小明的信箱更新成功',
-    hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
-    tokens: [
-      { id: 'update', text: 'UPDATE', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
-      { id: 'set', text: 'SET', type: 'keyword' },
-      { id: 'assign', text: "email = 'newming@email.com'", type: 'value' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
-      { id: 'condition', text: 'id = 1', type: 'operator' },
-    ],
-    correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
-    table: 'USER',
-    tableData: {
-      columns: ['id', 'name', 'email', 'role', 'password'],
-      rows: [
-        ['1', '王小明', 'ming@email.com', 'user', '******'],
-        ['2', '李燕容', 'yan@email.com', 'user', '******'],
-        ['3', '小美', 'mei@email.com', 'user', '******'],
-      ]
-    },
-    updateCell: { row: 0, col: 2, oldValue: 'ming@email.com', newValue: 'newming@email.com' },
-  },
-
-  // === 第 14 題：刪除會員 ===
-  {
-    id: 14,
+    id: 10,
     type: 'DELETE',
     scenario: '😢 小美：「我要退出會員，請刪除我的帳號」',
     instruction: '從 USER 表刪除小美的資料',
     expectedResult: '成功刪除會員「小美」',
     hint: 'DELETE FROM → 表名 → WHERE → 條件',
     tokens: [
-      { id: 'delete', text: 'DELETE FROM', type: 'keyword' },
       { id: 'table', text: 'USER', type: 'table' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
       { id: 'condition', text: 'id = 3', type: 'operator' },
+      { id: 'delete', text: 'DELETE FROM', type: 'keyword' },
+      { id: 'where', text: 'WHERE', type: 'keyword' },
     ],
     correctOrder: ['delete', 'table', 'where', 'condition'],
     table: 'USER',
@@ -449,19 +339,19 @@ const QUESTIONS: Question[] = [
     deleteRow: 2,
   },
 
-  // === 第 15 題：新增教練帳號 ===
+  // === 第 11 題：新增教練帳號 ===
   {
-    id: 15,
+    id: 11,
     type: 'INSERT',
     scenario: '💪 新教練「張健身」加入團隊！',
     instruction: '新增教練帳號（role 為 coach）',
     expectedResult: '成功新增教練「張健身」',
     hint: 'INSERT INTO → 表名 → VALUES → (值)',
     tokens: [
+      { id: 'vals', text: "('張健身', 'coach@email.com', 'coach', '密碼')", type: 'value' },
       { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
       { id: 'table', text: 'USER', type: 'table' },
       { id: 'values', text: 'VALUES', type: 'keyword' },
-      { id: 'vals', text: "('張健身', 'coach@email.com', 'coach', '密碼')", type: 'value' },
     ],
     correctOrder: ['insert', 'table', 'values', 'vals'],
     table: 'USER',
@@ -476,50 +366,21 @@ const QUESTIONS: Question[] = [
     resultRow: ['4', '張健身', 'coach@email.com', 'coach', '******'],
   },
 
-  // === 第 16 題：教練降級為學員 ===
+  // === 第 12 題：修改會員姓名 ===
   {
-    id: 16,
-    type: 'UPDATE',
-    scenario: '📉 李燕容因故暫停教練工作，改回一般學員',
-    instruction: '將李燕容的 role 改回 user',
-    expectedResult: '李燕容已改回一般學員',
-    hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
-    tokens: [
-      { id: 'update', text: 'UPDATE', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
-      { id: 'set', text: 'SET', type: 'keyword' },
-      { id: 'assign', text: "role = 'user'", type: 'value' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
-      { id: 'condition', text: 'id = 2', type: 'operator' },
-    ],
-    correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
-    table: 'USER',
-    tableData: {
-      columns: ['id', 'name', 'email', 'role', 'password'],
-      rows: [
-        ['1', '王小明', 'ming@email.com', 'user', '******'],
-        ['2', '李燕容', 'yan@email.com', 'coach', '******'],
-        ['3', '小美', 'mei@email.com', 'user', '******'],
-      ]
-    },
-    updateCell: { row: 1, col: 3, oldValue: 'coach', newValue: 'user' },
-  },
-
-  // === 第 17 題：修改會員姓名 ===
-  {
-    id: 17,
+    id: 12,
     type: 'UPDATE',
     scenario: '✏️ 王小明：「我改名叫『王大明』了，請更新！」',
     instruction: '修改 id=1 的會員名稱',
     expectedResult: '會員名稱更新為「王大明」',
     hint: 'UPDATE → 表名 → SET → 新值 → WHERE → 條件',
     tokens: [
-      { id: 'update', text: 'UPDATE', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
-      { id: 'set', text: 'SET', type: 'keyword' },
       { id: 'assign', text: "name = '王大明'", type: 'value' },
       { id: 'where', text: 'WHERE', type: 'keyword' },
+      { id: 'table', text: 'USER', type: 'table' },
+      { id: 'update', text: 'UPDATE', type: 'keyword' },
       { id: 'condition', text: 'id = 1', type: 'operator' },
+      { id: 'set', text: 'SET', type: 'keyword' },
     ],
     correctOrder: ['update', 'table', 'set', 'assign', 'where', 'condition'],
     table: 'USER',
@@ -533,87 +394,6 @@ const QUESTIONS: Question[] = [
     },
     updateCell: { row: 0, col: 1, oldValue: '王小明', newValue: '王大明' },
   },
-
-  // === 第 18 題：新增管理員 ===
-  {
-    id: 18,
-    type: 'INSERT',
-    scenario: '👑 新增系統管理員「林管理」',
-    instruction: '新增管理員帳號（role 為 admin）',
-    expectedResult: '成功新增管理員「林管理」',
-    hint: 'INSERT INTO → 表名 → VALUES → (值)',
-    tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
-      { id: 'values', text: 'VALUES', type: 'keyword' },
-      { id: 'vals', text: "('林管理', 'admin@email.com', 'admin', '密碼')", type: 'value' },
-    ],
-    correctOrder: ['insert', 'table', 'values', 'vals'],
-    table: 'USER',
-    tableData: {
-      columns: ['id', 'name', 'email', 'role', 'password'],
-      rows: [
-        ['1', '王小明', 'ming@email.com', 'user', '******'],
-        ['2', '李燕容', 'yan@email.com', 'user', '******'],
-        ['3', '小美', 'mei@email.com', 'user', '******'],
-      ]
-    },
-    resultRow: ['4', '林管理', 'admin@email.com', 'admin', '******'],
-  },
-
-  // === 第 19 題：刪除離職教練 ===
-  {
-    id: 19,
-    type: 'DELETE',
-    scenario: '👋 教練「李燕容」離職了，需要刪除帳號',
-    instruction: '從 USER 表刪除 id=2 的資料',
-    expectedResult: '成功刪除教練「李燕容」',
-    hint: 'DELETE FROM → 表名 → WHERE → 條件',
-    tokens: [
-      { id: 'delete', text: 'DELETE FROM', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
-      { id: 'where', text: 'WHERE', type: 'keyword' },
-      { id: 'condition', text: 'id = 2', type: 'operator' },
-    ],
-    correctOrder: ['delete', 'table', 'where', 'condition'],
-    table: 'USER',
-    tableData: {
-      columns: ['id', 'name', 'email', 'role', 'password'],
-      rows: [
-        ['1', '王小明', 'ming@email.com', 'user', '******'],
-        ['2', '李燕容', 'yan@email.com', 'coach', '******'],
-        ['3', '小美', 'mei@email.com', 'user', '******'],
-      ]
-    },
-    deleteRow: 1,
-  },
-
-  // === 第 20 題：新增企業會員 ===
-  {
-    id: 20,
-    type: 'INSERT',
-    scenario: '🏢 企業合作！「台積電健身社」團體加入',
-    instruction: '新增企業會員帳號',
-    expectedResult: '成功新增企業會員',
-    hint: 'INSERT INTO → 表名 → VALUES → (值)',
-    tokens: [
-      { id: 'insert', text: 'INSERT INTO', type: 'keyword' },
-      { id: 'table', text: 'USER', type: 'table' },
-      { id: 'values', text: 'VALUES', type: 'keyword' },
-      { id: 'vals', text: "('台積電健身社', 'tsmc@email.com', 'user', '密碼')", type: 'value' },
-    ],
-    correctOrder: ['insert', 'table', 'values', 'vals'],
-    table: 'USER',
-    tableData: {
-      columns: ['id', 'name', 'email', 'role', 'password'],
-      rows: [
-        ['1', '王小明', 'ming@email.com', 'user', '******'],
-        ['2', '李燕容', 'yan@email.com', 'coach', '******'],
-        ['3', '小美', 'mei@email.com', 'user', '******'],
-      ]
-    },
-    resultRow: ['4', '台積電健身社', 'tsmc@email.com', 'user', '******'],
-  },
 ]
 
 // === 狀態管理 ===
@@ -624,6 +404,38 @@ const showResult = ref(false)
 const animateTable = ref(false)
 const isExecuting = ref(false)  // 執行中動畫狀態
 const showExecutionArrow = ref(false)  // 顯示執行箭頭動畫
+
+// === 答題追蹤（仿 QuizModal 邏輯）===
+const firstAttemptCorrect = ref(0)        // 第一次就答對的題數（計分用）
+const hasAttemptedCurrent = ref(false)    // 當前這題是否已經嘗試過
+const showCompletionModal = ref(false)    // 完成時顯示慶祝彈窗
+
+// 計算正確率（只計算第一次就答對的）
+const correctCount = computed(() => firstAttemptCorrect.value)
+const isPerfectScore = computed(() => firstAttemptCorrect.value === QUESTIONS.length)
+
+// 玩家資訊與密碼
+const player = usePlayerStore()
+
+// 100% 時詢問名字（如果還沒填過）
+const needsNameInput = computed(() => isPerfectScore.value && !player.name)
+const tempNameInput = ref('')
+const nameSubmitted = ref(false)  // 用於追蹤是否已提交名字
+
+const secretPassword = computed(() => {
+  // 用戶輸入的名字優先，否則用 store 的名字
+  const nameToUse = tempNameInput.value || player.name
+  if (!nameToUse) return 'LIVEFIT2025'
+  return generatePassword(nameToUse)
+})
+
+// 提交名字
+function submitName() {
+  if (tempNameInput.value.trim()) {
+    player.setName(tempNameInput.value.trim())
+    nameSubmitted.value = true
+  }
+}
 
 const currentQuestion = computed(() => QUESTIONS[currentQuestionIndex.value])
 const totalQuestions = computed(() => QUESTIONS.length)
@@ -670,18 +482,28 @@ function checkAnswer() {
   const selected = selectedTokens.value
 
   // 檢查長度和順序
+  let isAnswerCorrect = true
   if (selected.length !== correct.length) {
+    isAnswerCorrect = false
+  } else {
+    for (let i = 0; i < correct.length; i++) {
+      if (selected[i] !== correct[i]) {
+        isAnswerCorrect = false
+        break
+      }
+    }
+  }
+
+  // 第一次作答才計分（仿 QuizModal）
+  if (!hasAttemptedCurrent.value && isAnswerCorrect) {
+    firstAttemptCorrect.value += 1
+  }
+  hasAttemptedCurrent.value = true  // 標記已嘗試
+
+  if (!isAnswerCorrect) {
     isCorrect.value = false
     showResult.value = true
     return
-  }
-
-  for (let i = 0; i < correct.length; i++) {
-    if (selected[i] !== correct[i]) {
-      isCorrect.value = false
-      showResult.value = true
-      return
-    }
   }
 
   // 答對了！開始執行動畫序列
@@ -710,6 +532,7 @@ function nextQuestion() {
   if (currentQuestionIndex.value < QUESTIONS.length - 1) {
     currentQuestionIndex.value++
     clearSelection()
+    hasAttemptedCurrent.value = false  // 重置，新的一題
   }
 }
 
@@ -721,7 +544,18 @@ function prevQuestion() {
 }
 
 function handleComplete() {
-  emit('complete')
+  // 顯示完成彈窗
+  showCompletionModal.value = true
+}
+
+function confirmComplete() {
+  // 關閉彈窗並發送分數
+  showCompletionModal.value = false
+  emit('complete', {
+    score: correctCount.value,
+    total: QUESTIONS.length,
+    isPerfect: isPerfectScore.value
+  })
 }
 
 // Token 顏色樣式
@@ -769,9 +603,14 @@ watch(currentQuestionIndex, () => {
           <span class="rounded-full px-3 py-1 text-sm font-bold" :class="getTypeColor(currentQuestion.type)">
             {{ currentQuestion.type }}
           </span>
-          <span class="text-sm font-bold text-slate-400">
-            第 {{ currentQuestionIndex + 1 }} / {{ totalQuestions }} 題
-          </span>
+          <div class="flex items-center gap-3">
+            <span class="text-sm text-emerald-400">
+              ✅ {{ correctCount }}/{{ totalQuestions }}
+            </span>
+            <span class="text-sm font-bold text-slate-400">
+              第 {{ currentQuestionIndex + 1 }} / {{ totalQuestions }} 題
+            </span>
+          </div>
         </div>
 
         <!-- 情境描述 -->
@@ -998,6 +837,95 @@ watch(currentQuestionIndex, () => {
         </div>
 
       </div>
+
+      <!-- 完成慶祝彈窗 -->
+      <Transition name="modal">
+        <div v-if="showCompletionModal" class="absolute inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+          <div class="mx-4 max-w-md rounded-2xl border border-slate-600 bg-slate-800 p-6 shadow-2xl">
+            <!-- 標題 -->
+            <div class="mb-4 text-center">
+              <div class="mb-2 text-5xl">{{ isPerfectScore ? '🏆' : '🎉' }}</div>
+              <h2 class="text-2xl font-bold text-white">
+                {{ isPerfectScore ? '完美通關！' : 'SQL 練習完成！' }}
+              </h2>
+            </div>
+
+            <!-- 分數顯示 -->
+            <div class="mb-6 rounded-xl border border-slate-600 bg-slate-700/50 p-4 text-center">
+              <div class="text-sm text-slate-400">你的成績</div>
+              <div class="mt-1 text-4xl font-bold" :class="isPerfectScore ? 'text-emerald-400' : 'text-amber-400'">
+                {{ correctCount }} / {{ totalQuestions }}
+              </div>
+              <div class="mt-1 text-sm" :class="isPerfectScore ? 'text-emerald-400' : 'text-slate-400'">
+                {{ isPerfectScore ? '全部答對！' : `答對 ${correctCount} 題` }}
+              </div>
+            </div>
+
+            <!-- 100% 隱藏道具獎勵 -->
+            <Transition name="reward">
+              <div v-if="isPerfectScore" class="mb-6 rounded-xl border-2 border-amber-500/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 p-4">
+                <div class="flex items-center gap-3">
+                  <div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/30 text-2xl">
+                    🔑
+                  </div>
+                  <div class="flex-1">
+                    <div class="text-sm font-bold text-amber-400">🎁 解鎖隱藏道具！</div>
+                    <div class="text-xs text-amber-300/80">海克絲給你的神秘密碼</div>
+                  </div>
+                </div>
+
+                <!-- 如果還沒有名字，先詢問 -->
+                <div v-if="needsNameInput && !nameSubmitted" class="mt-3 rounded-lg bg-slate-900/50 p-3">
+                  <div class="text-xs text-slate-400 text-center mb-2">請先輸入你的名字來產生專屬密碼：</div>
+                  <div class="flex gap-2">
+                    <input
+                      v-model="tempNameInput"
+                      type="text"
+                      placeholder="輸入你的名字"
+                      class="flex-1 rounded-lg border border-slate-600 bg-slate-800 px-3 py-2 text-sm text-white placeholder-slate-500 focus:border-amber-500 focus:outline-none"
+                      @keyup.enter="submitName"
+                    />
+                    <button
+                      class="rounded-lg bg-amber-500 px-4 py-2 text-sm font-bold text-white transition-colors hover:bg-amber-600 disabled:opacity-50"
+                      :disabled="!tempNameInput.trim()"
+                      @click="submitName"
+                    >
+                      確認
+                    </button>
+                  </div>
+                </div>
+
+                <!-- 已有名字，顯示密碼 -->
+                <div v-else class="mt-3 rounded-lg bg-slate-900/50 p-3 text-center">
+                  <div class="text-xs text-slate-400">記住這組密碼，之後會用到：</div>
+                  <div class="mt-1 font-mono text-lg font-bold tracking-wider text-amber-400">
+                    {{ secretPassword }}
+                  </div>
+                </div>
+              </div>
+            </Transition>
+
+            <!-- 未達 100% 的提示 -->
+            <div v-if="!isPerfectScore" class="mb-6 rounded-lg border border-slate-600 bg-slate-700/30 p-3 text-center">
+              <div class="text-sm text-slate-400">
+                💡 每題都要<span class="text-amber-400">一次就答對</span>才能獲得隱藏道具喔！
+              </div>
+              <div class="mt-1 text-xs text-slate-500">
+                下次挑戰時記得更仔細確認答案～
+              </div>
+            </div>
+
+            <!-- 按鈕 -->
+            <button
+              class="w-full rounded-lg bg-emerald-500 py-3 text-sm font-bold text-white transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:opacity-50"
+              :disabled="isPerfectScore && needsNameInput && !nameSubmitted"
+              @click="confirmComplete"
+            >
+              {{ isPerfectScore ? '太棒了！繼續冒險' : '繼續' }} →
+            </button>
+          </div>
+        </div>
+      </Transition>
   </div>
 </template>
 
@@ -1139,5 +1067,50 @@ watch(currentQuestionIndex, () => {
 .arrow-leave-to {
   opacity: 0;
   transform: translateY(20px);
+}
+
+/* === 彈窗動畫 === */
+.modal-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.modal-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.modal-enter-from {
+  opacity: 0;
+}
+
+.modal-enter-from > div {
+  transform: scale(0.9) translateY(20px);
+}
+
+.modal-leave-to {
+  opacity: 0;
+}
+
+.modal-leave-to > div {
+  transform: scale(0.9) translateY(20px);
+}
+
+/* === 獎勵動畫 === */
+@keyframes reward-glow {
+  0%, 100% {
+    box-shadow: 0 0 10px 2px rgba(245, 158, 11, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 20px 6px rgba(245, 158, 11, 0.5);
+  }
+}
+
+.reward-enter-active {
+  transition: all 0.5s ease-out;
+  animation: reward-glow 2s ease-in-out infinite;
+}
+
+.reward-enter-from {
+  opacity: 0;
+  transform: scale(0.8);
 }
 </style>

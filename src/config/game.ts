@@ -4,7 +4,7 @@
  */
 
 // 目前開放的最大關卡數（開發中可調整）
-export const MAX_AVAILABLE_CHAPTER = 5
+export const MAX_AVAILABLE_CHAPTER = 7
 
 // 遊戲總關卡數（不含結局）
 export const TOTAL_CHAPTERS = 10

@@ -29,9 +29,8 @@ const slides = [
   { id: 'third-party', title: 'Day 5｜第三方 API 服務', description: '介紹第三方 API 服務，如何整合外部服務到自己的應用程式' },
   // Day 6
   { id: 'table-design', title: 'Day 6｜資料表設計入門', description: '從 Excel 到資料庫的正規化概念，包含主鍵、外來鍵、資料型態、正規化動畫展示' },
+  { id: 'livefit-database', title: 'Day 6｜LiveFit 資料庫探險', description: '用 LiveFit 業務流程認識 4 張資料表：CREDIT_PACKAGE、SKILL、USER、CREDIT_PURCHASE' },
   // Day 7
-  { id: 'database-intro', title: 'Day 7｜SQL 鐵三角特訓班', description: '從 Excel 到資料庫的完整教學，包含資料表、主鍵、外來鍵、SQL 語法 (SELECT/FROM/WHERE) 以及 CRUD 操作' },
-  { id: 'livefit-database', title: 'Day 7｜LiveFit 資料庫探險', description: '用 LiveFit 業務流程認識 4 張資料表：CREDIT_PACKAGE、SKILL、USER、CREDIT_PURCHASE' },
   { id: 'database-access', title: 'Day 7｜資料庫操作方式', description: '破除迷思！認識兩種資料庫操作方式：後端程式 vs 管理工具（DBeaver）' },
   { id: 'sql-basics', title: 'Day 7｜SQL 語法基礎', description: '學習 SQL 六大天王：SELECT、FROM、WHERE（查詢）+ INSERT、UPDATE、DELETE（操作）' },
   { id: 'sql-practice', title: 'Day 7｜SQL 練習場', description: '透過點擊拼湊 SQL 語法，練習 INSERT、UPDATE、DELETE 操作' },
