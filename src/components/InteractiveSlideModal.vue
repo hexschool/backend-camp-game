@@ -42,6 +42,12 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   'drag-sort': defineAsyncComponent(() => import('./interactive-slides/DragSortSlide.vue')),
   'data-flow': defineAsyncComponent(() => import('./interactive-slides/DataFlowSlide.vue')),
   'third-party': defineAsyncComponent(() => import('./interactive-slides/ThirdPartySlide.vue')),
+  'database-intro': defineAsyncComponent(() => import('./interactive-slides/DatabaseIntroSlide.vue')),
+  'table-design': defineAsyncComponent(() => import('./interactive-slides/TableDesignSlide.vue')),
+  'livefit-database': defineAsyncComponent(() => import('./interactive-slides/LivefitDatabaseSlide.vue')),
+  'database-access': defineAsyncComponent(() => import('./interactive-slides/DatabaseAccessSlide.vue')),
+  'sql-practice': defineAsyncComponent(() => import('./interactive-slides/SqlPracticeSlide.vue')),
+  'sql-basics': defineAsyncComponent(() => import('./interactive-slides/SqlBasicsSlide.vue')),
   // 之後新增更多簡報時，在這裡註冊
 }
 
