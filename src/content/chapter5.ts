@@ -418,7 +418,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '(嘆氣) 前一任後端工程師離職前沒時間做完，所以金流那塊一直是空的。',
     scene: 'normal',
-    coachExpression: 'normal',
+    coachExpression: 'sigh',
   },
   {
     type: 'dialogue',

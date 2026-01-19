@@ -450,7 +450,7 @@ const nodes: ChapterNode[] = [
           { id: 'c', label: '重新安裝整個專案' },
         ],
         correctOptionId: 'b',
-        explanation: '換圖片後，還要找到引用它的程式碼（如 LayoutHeader.vue）改成新檔名。',
+        explanation: '換圖片後，要開啟 LayoutHeader.vue 檔案，找到引用圖片的程式碼，把圖片檔名換成新的。',
       },
       {
         id: 'q8',
@@ -546,7 +546,7 @@ const nodes: ChapterNode[] = [
   {
     type: 'dialogue',
     speaker: '海克絲',
-    text: '記得換完之後重新整理網頁，確認 Logo 有更新。如果沒變，可能是瀏覽器快取，按 Ctrl+F5 強制重新整理試試。',
+    text: '記得換完之後重新整理網頁，確認 Logo 有更新。如果沒變，可能是瀏覽器快取，按 Ctrl+F5 強制重新整理試試（Mac 是按 Cmd+R）。',
     scene: 'meeting',
     coachExpression: 'normal',
   },
