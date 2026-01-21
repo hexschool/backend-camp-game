@@ -34,6 +34,9 @@ const slides = [
   { id: 'database-access', title: 'Day 7｜資料庫操作方式', description: '破除迷思！認識兩種資料庫操作方式：後端程式 vs 管理工具（DBeaver）' },
   { id: 'sql-basics', title: 'Day 7｜SQL 語法基礎', description: '學習 SQL 六大天王：SELECT、FROM、WHERE（查詢）+ INSERT、UPDATE、DELETE（操作）' },
   { id: 'sql-practice', title: 'Day 7｜SQL 練習場', description: '透過點擊拼湊 SQL 語法，練習 INSERT、UPDATE、DELETE 操作' },
+  // Day 8
+  { id: 'jwt-intro', title: 'Day 8｜JWT 通行證：用餐廳號碼牌理解身份驗證', description: '用餐廳預約號碼牌的比喻，理解 JWT 如何讓伺服器記住你是誰' },
+  { id: 'jwt-storage', title: 'Day 8｜JWT 存放位置：瀏覽器的儲物櫃', description: '用 Chrome DevTools 實際看看 JWT 存在哪裡，以 Facebook 登入為例' },
 ]
 
 // 當前預覽的簡報

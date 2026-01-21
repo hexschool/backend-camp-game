@@ -61,6 +61,9 @@ const slideComponents: Record<string, ReturnType<typeof defineAsyncComponent>> =
   'sql-practice': defineAsyncComponent(() => import('./interactive-slides/SqlPracticeSlide.vue')),
   'sql-basics': defineAsyncComponent(() => import('./interactive-slides/SqlBasicsSlide.vue')),
   'video-message': defineAsyncComponent(() => import('./interactive-slides/VideoMessageSlide.vue')),
+  // Day 8
+  'jwt-intro': defineAsyncComponent(() => import('./interactive-slides/JwtIntroSlide.vue')),
+  'jwt-storage': defineAsyncComponent(() => import('./interactive-slides/JwtStorageSlide.vue')),
   // 之後新增更多簡報時，在這裡註冊
 }
 
