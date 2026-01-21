@@ -1731,7 +1731,7 @@ function resetReview() {
               <div class="mt-2 text-sm text-slate-300">
                 用「<span class="text-blue-400 font-bold">堂數方案表</span>」來練習 5 大 SQL 操作
               </div>
-              <div class="mt-1 text-xs text-slate-500">
+              <div class="mt-1 text-sm font-medium text-amber-300">
                 （表格名稱：CREDIT_PACKAGE）
               </div>
               <div class="mt-3 flex items-center justify-center gap-2">
@@ -1872,7 +1872,7 @@ function resetReview() {
                       <td class="px-3 py-2 text-slate-400 border-r border-slate-700/50">{{ row.id }}</td>
                       <td class="px-3 py-2 text-white border-r border-slate-700/50">
                         {{ row.name }}
-                        <span v-if="row.id === 4 && reviewShowResult" class="text-emerald-400"> ✨ 新增</span>
+                        <span v-if="row.id === 4 && reviewShowResult && currentReviewQuestion.type === 'INSERT'" class="text-emerald-400"> ✨ 新增</span>
                       </td>
                       <td class="px-3 py-2 text-slate-300 border-r border-slate-700/50">{{ row.credit_amount }}</td>
                       <td class="px-3 py-2" :class="row.id === 1 && currentReviewQuestion.type === 'UPDATE' && reviewShowResult ? 'text-amber-400 font-bold' : 'text-slate-300'">

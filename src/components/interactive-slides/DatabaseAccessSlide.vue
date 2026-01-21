@@ -56,9 +56,29 @@ const STEPS: Step[] = [
 const currentStep = ref(0)
 const animState = ref(0)
 const quizAnswered = ref<Record<number, boolean>>({})
+const quizCorrect = ref<Record<number, boolean>>({})
 const selectedAnswer = ref<string | null>(null)
 
 const stepData = computed(() => STEPS[currentStep.value])
+
+// 判斷是否可以前往下一步
+const canGoNext = computed(() => {
+  const view = stepData.value.view
+  // 測驗頁面必須答對才能下一步
+  if (view === 'quiz') {
+    return quizAnswered.value[14] && quizCorrect.value[14]
+  }
+  return true
+})
+
+// 下一步按鈕的提示文字
+const nextStepHint = computed(() => {
+  const view = stepData.value.view
+  if (view === 'quiz' && !canGoNext.value) {
+    return '請先答對測驗題'
+  }
+  return ''
+})
 
 onMounted(() => {
   triggerAnimation()
@@ -66,6 +86,12 @@ onMounted(() => {
 
 watch(currentStep, () => {
   animState.value = 0
+  // 切換頁面時重置測驗狀態
+  const currentStepId = STEPS[currentStep.value]?.id
+  if (currentStepId && quizAnswered.value[currentStepId]) {
+    delete quizAnswered.value[currentStepId]
+    delete quizCorrect.value[currentStepId]
+  }
   selectedAnswer.value = null
   setTimeout(() => triggerAnimation(), 100)
 })
@@ -97,7 +123,13 @@ function checkAnswer(stepId: number, answer: string, isCorrect: boolean) {
   if (quizAnswered.value[stepId]) return
   selectedAnswer.value = answer
   quizAnswered.value[stepId] = true
-  return isCorrect
+  quizCorrect.value[stepId] = isCorrect
+}
+
+function retryQuiz(stepId: number) {
+  delete quizAnswered.value[stepId]
+  delete quizCorrect.value[stepId]
+  selectedAnswer.value = null
 }
 </script>
 
@@ -109,6 +141,8 @@ function checkAnswer(stepId: number, answer: string, isCorrect: boolean) {
     :stepTitle="stepData.title"
     :stepDesc="stepData.desc"
     themeColor="sky"
+    :canGoNext="canGoNext"
+    :nextStepHint="nextStepHint"
     @prev="prevStep"
     @next="nextStep"
     @complete="handleComplete"
@@ -709,14 +743,25 @@ function checkAnswer(stepId: number, answer: string, isCorrect: boolean) {
               <span v-if="quizAnswered[14] && !option.correct && selectedAnswer === option.key" class="ml-2">❌</span>
             </button>
           </div>
-          <div v-if="quizAnswered[14]" class="rounded-xl border border-green-500/30 bg-green-500/10 p-4 transition-all duration-500">
+          <div v-if="quizAnswered[14] && quizCorrect[14]" class="rounded-xl border border-green-500/30 bg-green-500/10 p-4 transition-all duration-500">
             <p class="text-green-400">
-              <span class="font-bold">正確！</span>
+              <span class="font-bold">🎉 正確！</span>
               使用者操作都是由<span class="font-bold">程式自動處理</span>的。
             </p>
             <p class="mt-1 text-sm text-slate-400">
               不可能每次都有人用 DBeaver 幫忙寫入啊～
             </p>
+          </div>
+          <div v-if="quizAnswered[14] && !quizCorrect[14]" class="flex flex-col gap-3">
+            <div class="rounded-xl border border-rose-500/30 bg-rose-500/10 p-4">
+              <p class="text-rose-400">
+                <span class="font-bold">😅 差一點！</span>
+                想想看：每次使用者按購買，工程師都要手動幫忙嗎？
+              </p>
+            </div>
+            <button class="rounded-lg border border-sky-500 bg-sky-500/20 px-4 py-2 text-sky-400 hover:bg-sky-500/30" @click="retryQuiz(14)">
+              重新答題
+            </button>
           </div>
         </div>
       </div>

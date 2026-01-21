@@ -57,7 +57,7 @@ const STEPS: Step[] = [
   { id: 19, view: 'user_email', title: 'Email 唯一約束', desc: 'email 不能重複！每個信箱只能註冊一次。' },
   // 第五章：USER 變教練
   { id: 20, view: 'coach_intro', title: '情境：李燕容想當教練', desc: '她想從「學員」變成「教練」，要怎麼做？' },
-  { id: 21, view: 'coach_change', title: '修改 role 欄位', desc: '把 role 從 user 改成 coach，她就變成教練了！' },
+  { id: 21, view: 'coach_change', title: '修改 role 欄位', desc: '(管理員) 把 role 從 user 改成 coach，她就變成教練了！' },
   { id: 22, view: 'coach_quiz', title: '小測驗', desc: '如果小美也想當教練，要怎麼做？' },
   // 第六章：CREDIT_PURCHASE
   { id: 23, view: 'purchase_intro', title: '情境：王小明要買課', desc: '上課要先買堂數，王小明選了 14 堂組合包！' },
@@ -76,8 +76,39 @@ const STEPS: Step[] = [
 const currentStep = ref(0)
 const animState = ref(0)
 const quizAnswered = ref<Record<number, boolean>>({})
+const quizCorrect = ref<Record<number, boolean>>({})
+const selectedAnswer = ref<Record<number, string>>({})
 
 const stepData = computed(() => STEPS[currentStep.value])
+
+// 測驗頁面對應的 stepId
+const quizStepIds: Record<string, number> = {
+  cp_quiz: 8,
+  user_quiz: 18,
+  coach_quiz: 22,
+  purchase_quiz: 27
+}
+
+// 判斷是否可以前往下一步
+const canGoNext = computed(() => {
+  const view = stepData.value.view
+  const stepId = quizStepIds[view]
+  // 如果是測驗頁面，必須答對才能前往下一步
+  if (stepId) {
+    return quizAnswered.value[stepId] && quizCorrect.value[stepId]
+  }
+  return true
+})
+
+// 下一步按鈕的提示文字
+const nextStepHint = computed(() => {
+  const view = stepData.value.view
+  const stepId = quizStepIds[view]
+  if (stepId && !canGoNext.value) {
+    return '請先答對測驗題'
+  }
+  return ''
+})
 
 onMounted(() => {
   triggerAnimation()
@@ -85,6 +116,13 @@ onMounted(() => {
 
 watch(currentStep, () => {
   animState.value = 0
+  // 切換頁面時重置該頁的測驗狀態
+  const currentStepId = STEPS[currentStep.value]?.id
+  if (currentStepId && quizAnswered.value[currentStepId]) {
+    delete quizAnswered.value[currentStepId]
+    delete quizCorrect.value[currentStepId]
+    delete selectedAnswer.value[currentStepId]
+  }
   setTimeout(() => triggerAnimation(), 100)
 })
 
@@ -110,10 +148,17 @@ function handleComplete() {
   emit('complete')
 }
 
-function checkAnswer(stepId: number, isCorrect: boolean) {
+function checkAnswer(stepId: number, answer: string, isCorrect: boolean) {
   if (quizAnswered.value[stepId]) return
   quizAnswered.value[stepId] = true
-  return isCorrect
+  quizCorrect.value[stepId] = isCorrect
+  selectedAnswer.value[stepId] = answer
+}
+
+function retryQuiz(stepId: number) {
+  delete quizAnswered.value[stepId]
+  delete quizCorrect.value[stepId]
+  delete selectedAnswer.value[stepId]
 }
 </script>
 
@@ -125,6 +170,8 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
     :stepTitle="stepData.title"
     :stepDesc="stepData.desc"
     themeColor="purple"
+    :canGoNext="canGoNext"
+    :nextStepHint="nextStepHint"
     @prev="prevStep"
     @next="nextStep"
     @complete="handleComplete"
@@ -322,14 +369,24 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
                 { label: 'B. credit_amount', correct: true },
                 { label: 'C. price', correct: false }
               ]" :key="i" class="rounded-lg border-2 px-4 py-3 text-left transition-all text-white" :class="[
-                quizAnswered[8] && opt.correct ? 'border-green-500 bg-green-500/20 text-green-300' : '',
-                quizAnswered[8] && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : 'border-slate-600 hover:border-amber-500 hover:bg-slate-700/50'
-              ]" @click="checkAnswer(8, opt.correct)" :disabled="quizAnswered[8]">
+                quizAnswered[8] && opt.correct && quizCorrect[8] ? 'border-green-500 bg-green-500/20 text-green-300' : '',
+                quizAnswered[8] && selectedAnswer[8] === opt.label && !quizCorrect[8] ? 'border-rose-500 bg-rose-500/20 text-rose-300' : '',
+                quizAnswered[8] && selectedAnswer[8] !== opt.label && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : '',
+                !quizAnswered[8] ? 'border-slate-600 hover:border-amber-500 hover:bg-slate-700/50' : ''
+              ]" @click="checkAnswer(8, opt.label, opt.correct)" :disabled="quizAnswered[8]">
                 {{ opt.label }}
               </button>
             </div>
-            <div v-if="quizAnswered[8]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
+            <div v-if="quizAnswered[8] && quizCorrect[8]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
               🎉 答對了！credit_amount 就是記錄有幾堂課的欄位。
+            </div>
+            <div v-if="quizAnswered[8] && !quizCorrect[8]" class="mt-4 flex flex-col gap-3">
+              <div class="rounded-lg bg-rose-500/20 p-3 text-rose-400">
+                😅 差一點！再想想看哪個欄位代表「堂數」？
+              </div>
+              <button class="rounded-lg border border-amber-500 bg-amber-500/20 px-4 py-2 text-amber-400 hover:bg-amber-500/30" @click="retryQuiz(8)">
+                重新答題
+              </button>
             </div>
           </div>
         </div>
@@ -704,14 +761,24 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
                 { label: 'B. 1 個', correct: false },
                 { label: 'C. 3 個', correct: false }
               ]" :key="i" class="rounded-lg border-2 px-4 py-3 text-left transition-all text-white" :class="[
-                quizAnswered[18] && opt.correct ? 'border-green-500 bg-green-500/20 text-green-300' : '',
-                quizAnswered[18] && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : 'border-slate-600 hover:border-blue-500 hover:bg-slate-700/50'
-              ]" @click="checkAnswer(18, opt.correct)" :disabled="quizAnswered[18]">
+                quizAnswered[18] && opt.correct && quizCorrect[18] ? 'border-green-500 bg-green-500/20 text-green-300' : '',
+                quizAnswered[18] && selectedAnswer[18] === opt.label && !quizCorrect[18] ? 'border-rose-500 bg-rose-500/20 text-rose-300' : '',
+                quizAnswered[18] && selectedAnswer[18] !== opt.label && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : '',
+                !quizAnswered[18] ? 'border-slate-600 hover:border-blue-500 hover:bg-slate-700/50' : ''
+              ]" @click="checkAnswer(18, opt.label, opt.correct)" :disabled="quizAnswered[18]">
                 {{ opt.label }}
               </button>
             </div>
-            <div v-if="quizAnswered[18]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
+            <div v-if="quizAnswered[18] && quizCorrect[18]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
               🎉 答對了！目前三個人的 role 都是 user，所以沒有教練。
+            </div>
+            <div v-if="quizAnswered[18] && !quizCorrect[18]" class="mt-4 flex flex-col gap-3">
+              <div class="rounded-lg bg-rose-500/20 p-3 text-rose-400">
+                😅 差一點！再看一下表格中的 role 欄位。
+              </div>
+              <button class="rounded-lg border border-blue-500 bg-blue-500/20 px-4 py-2 text-blue-400 hover:bg-blue-500/30" @click="retryQuiz(18)">
+                重新答題
+              </button>
             </div>
           </div>
         </div>
@@ -773,7 +840,7 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
         <div class="relative z-10 flex w-full max-w-xl flex-col items-center gap-4">
           <span class="rounded-full bg-green-500/20 px-4 py-1 text-sm text-green-400">👤 → COACH</span>
           <h2 class="text-xl font-bold text-white">修改 role 欄位</h2>
-          <p class="text-slate-400">把李燕容的 role 從 user 改成 coach</p>
+          <p class="text-slate-400">(管理員) 把李燕容的 role 從 user 改成 coach</p>
           <div class="w-full overflow-x-auto rounded-xl border border-slate-700 bg-slate-800/50">
             <table class="w-full text-sm">
               <thead class="bg-slate-800">
@@ -816,14 +883,24 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
                 { label: 'B. 把她的 role 改成 coach', correct: true },
                 { label: 'C. 在 SKILL 表新增一個「小美」', correct: false }
               ]" :key="i" class="rounded-lg border-2 px-4 py-3 text-left transition-all text-white" :class="[
-                quizAnswered[22] && opt.correct ? 'border-green-500 bg-green-500/20 text-green-300' : '',
-                quizAnswered[22] && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : 'border-slate-600 hover:border-green-500 hover:bg-slate-700/50'
-              ]" @click="checkAnswer(22, opt.correct)" :disabled="quizAnswered[22]">
+                quizAnswered[22] && opt.correct && quizCorrect[22] ? 'border-green-500 bg-green-500/20 text-green-300' : '',
+                quizAnswered[22] && selectedAnswer[22] === opt.label && !quizCorrect[22] ? 'border-rose-500 bg-rose-500/20 text-rose-300' : '',
+                quizAnswered[22] && selectedAnswer[22] !== opt.label && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : '',
+                !quizAnswered[22] ? 'border-slate-600 hover:border-green-500 hover:bg-slate-700/50' : ''
+              ]" @click="checkAnswer(22, opt.label, opt.correct)" :disabled="quizAnswered[22]">
                 {{ opt.label }}
               </button>
             </div>
-            <div v-if="quizAnswered[22]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
+            <div v-if="quizAnswered[22] && quizCorrect[22]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
               🎉 答對了！只要修改 role 欄位就好，不需要重新註冊。
+            </div>
+            <div v-if="quizAnswered[22] && !quizCorrect[22]" class="mt-4 flex flex-col gap-3">
+              <div class="rounded-lg bg-rose-500/20 p-3 text-rose-400">
+                😅 差一點！想想看，學員變教練需要修改哪個欄位？
+              </div>
+              <button class="rounded-lg border border-green-500 bg-green-500/20 px-4 py-2 text-green-400 hover:bg-green-500/30" @click="retryQuiz(22)">
+                重新答題
+              </button>
             </div>
           </div>
         </div>
@@ -1016,14 +1093,24 @@ function checkAnswer(stepId: number, isCorrect: boolean) {
                 { label: 'B. 王小明', correct: true },
                 { label: 'C. 小美', correct: false }
               ]" :key="i" class="rounded-lg border-2 px-4 py-3 text-left transition-all text-white" :class="[
-                quizAnswered[27] && opt.correct ? 'border-green-500 bg-green-500/20 text-green-300' : '',
-                quizAnswered[27] && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : 'border-slate-600 hover:border-purple-500 hover:bg-slate-700/50'
-              ]" @click="checkAnswer(27, opt.correct)" :disabled="quizAnswered[27]">
+                quizAnswered[27] && opt.correct && quizCorrect[27] ? 'border-green-500 bg-green-500/20 text-green-300' : '',
+                quizAnswered[27] && selectedAnswer[27] === opt.label && !quizCorrect[27] ? 'border-rose-500 bg-rose-500/20 text-rose-300' : '',
+                quizAnswered[27] && selectedAnswer[27] !== opt.label && !opt.correct ? 'border-slate-600 bg-slate-800/50 text-slate-400' : '',
+                !quizAnswered[27] ? 'border-slate-600 hover:border-purple-500 hover:bg-slate-700/50' : ''
+              ]" @click="checkAnswer(27, opt.label, opt.correct)" :disabled="quizAnswered[27]">
                 {{ opt.label }}
               </button>
             </div>
-            <div v-if="quizAnswered[27]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
+            <div v-if="quizAnswered[27] && quizCorrect[27]" class="mt-4 rounded-lg bg-green-500/20 p-3 text-green-400">
               🎉 答對了！user_id = 1 對應到 USER 表的第一筆資料，就是王小明。
+            </div>
+            <div v-if="quizAnswered[27] && !quizCorrect[27]" class="mt-4 flex flex-col gap-3">
+              <div class="rounded-lg bg-rose-500/20 p-3 text-rose-400">
+                😅 差一點！回去看看 USER 表，id = 1 是誰？
+              </div>
+              <button class="rounded-lg border border-purple-500 bg-purple-500/20 px-4 py-2 text-purple-400 hover:bg-purple-500/30" @click="retryQuiz(27)">
+                重新答題
+              </button>
             </div>
           </div>
         </div>

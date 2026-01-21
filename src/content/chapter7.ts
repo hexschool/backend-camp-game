@@ -229,6 +229,13 @@ const nodes: ChapterNode[] = [
   },
   {
     type: 'dialogue',
+    speaker: '海克絲',
+    text: '(壓低聲音) 偷偷告訴你，每題都一次就答對的話，會有隱藏道具喔！',
+    scene: 'normal',
+    coachExpression: 'praise',
+  },
+  {
+    type: 'dialogue',
     speaker: '你',
     text: '(深呼吸) 好！我來挑戰！',
     scene: 'normal',

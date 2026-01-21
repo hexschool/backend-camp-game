@@ -407,6 +407,11 @@ function onInteractiveSlideClose() {
   enterNode(nodes.value[nextIdx]!)
 }
 
+function onInteractiveSlideCancel() {
+  // 未完成簡報，關閉 modal 但不推進進度（重新進入當前節點）
+  enterNode(node.value!)
+}
+
 function onSqlPracticeComplete(result: SqlPracticeResult) {
   // 儲存 SQL 練習結果
   sqlPracticeResult.value = result
@@ -899,6 +904,7 @@ onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
       :title="interactiveSlideNode.title"
       :isMusicPlaying="isMusicPlaying"
       @close="onInteractiveSlideClose"
+      @cancel="onInteractiveSlideCancel"
       @sqlPracticeComplete="onSqlPracticeComplete"
       @toggleMusic="toggleMusic"
       @switchToEndingMusic="switchToEndingMusic"

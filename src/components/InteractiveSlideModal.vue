@@ -17,6 +17,7 @@ export type SqlPracticeResult = {
 
 const emit = defineEmits<{
   (e: 'close'): void
+  (e: 'cancel'): void
   (e: 'sqlPracticeComplete', result: SqlPracticeResult): void
   (e: 'toggleMusic'): void
   (e: 'switchToEndingMusic'): void
@@ -114,7 +115,7 @@ function handleComplete(result?: SqlPracticeResult) {
         <button
           type="button"
           class="flex h-8 w-8 items-center justify-center rounded-full text-slate-400 transition-colors hover:bg-slate-100 hover:text-slate-600"
-          @click="emit('close')"
+          @click="emit('cancel')"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
