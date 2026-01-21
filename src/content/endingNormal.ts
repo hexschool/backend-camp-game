@@ -277,7 +277,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '（看著你的表情，沉默了一下）',
     scene: 'normal',
-    coachExpression: 'sigh',
+    coachExpression: 'normal',
   },
   {
     type: 'dialogue',
@@ -403,7 +403,7 @@ const nodes: ChapterNode[] = [
     speaker: '海克絲',
     text: '（微微一笑）「走吧，先去吃早餐。修 Bug 之前，先把自己餵飽。」',
     scene: 'normal',
-    coachExpression: 'biglaugh',
+    coachExpression: 'normal',
   },
 
   // === 傍晚，離開公司 ===

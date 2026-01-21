@@ -1,10 +1,19 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, computed } from 'vue'
 import * as THREE from 'three'
+
+// 道具類型
+type RewardItem = {
+  icon: string
+  title: string
+  description: string
+  code?: string  // 可選的序號/密碼
+}
 
 const props = defineProps<{
   playerName: string
   chapterTitle: string
+  reward?: RewardItem  // 可選的獎勵道具
 }>()
 
 const emit = defineEmits<{
@@ -479,9 +488,29 @@ onUnmounted(() => {
       </div>
 
       <!-- 玩家名稱 -->
-      <p class="mb-8 text-xl font-bold text-white/90">
+      <p class="mb-6 text-xl font-bold text-white/90">
         <span class="text-amber-400">{{ playerName }}</span>，你做到了！
       </p>
+
+      <!-- 獲得道具（如果有） -->
+      <div v-if="reward" class="mb-6 rounded-xl border-2 border-amber-500/50 bg-gradient-to-r from-amber-500/20 to-yellow-500/20 px-6 py-4">
+        <div class="flex items-center gap-3">
+          <div class="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/30 text-2xl">
+            {{ reward.icon }}
+          </div>
+          <div class="text-left">
+            <div class="text-sm font-bold text-amber-400">{{ reward.title }}</div>
+            <div class="text-xs text-amber-300/80">{{ reward.description }}</div>
+          </div>
+        </div>
+        <!-- 顯示序號（如果有） -->
+        <div v-if="reward.code" class="mt-3 rounded-lg bg-slate-900/50 p-3 text-center">
+          <div class="text-xs text-amber-300/70">記住這組密碼，之後會用到：</div>
+          <div class="mt-1 font-mono text-lg font-bold tracking-wider text-amber-400">
+            {{ reward.code }}
+          </div>
+        </div>
+      </div>
 
       <!-- 繼續按鈕 -->
       <button

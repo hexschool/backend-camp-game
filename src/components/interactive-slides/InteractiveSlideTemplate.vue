@@ -19,11 +19,17 @@ const props = withDefaults(
     stepDesc: string
     // 主題色（用於按鈕和進度條）
     themeColor?: 'amber' | 'sky' | 'emerald' | 'purple'
+    // 是否可以前往下一步（用於需要完成某些操作才能繼續的情境）
+    canGoNext?: boolean
+    // 下一步按鈕的提示文字（當 canGoNext 為 false 時顯示）
+    nextStepHint?: string
   }>(),
   {
     subtitle: '',
     icon: '',
     themeColor: 'amber',
+    canGoNext: true,
+    nextStepHint: '',
   }
 )
 
@@ -137,55 +143,81 @@ function handleComplete() {
     </div>
 
     <!-- Footer Controls -->
-    <div class="relative z-20 flex items-center justify-between gap-3 border-t border-white/10 bg-slate-900/80 px-4 pb-6 pt-4 backdrop-blur-xl md:px-6 md:py-4">
-      <button
-        :disabled="!canGoPrev"
-        class="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 md:px-6 md:py-3"
-        @click="handlePrev"
-      >
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
-        </svg>
-        <span class="hidden md:inline">上一步</span>
-      </button>
-
-      <!-- Mobile step indicator -->
-      <div class="flex gap-1 md:hidden">
-        <div
-          v-for="i in totalSteps"
-          :key="i"
-          class="h-1.5 rounded-full transition-all duration-300"
-          :class="
-            i - 1 === currentStep
-              ? `w-4 ${themeClasses.stepDot}`
-              : i - 1 < currentStep
-                ? `w-1.5 ${themeClasses.stepDotDone}`
-                : 'w-1.5 bg-slate-600'
-          "
-        ></div>
+    <div class="relative z-20 border-t border-white/10 bg-slate-900/80 px-4 pb-6 pt-4 backdrop-blur-xl md:px-6 md:py-4">
+      <!-- 手機版：提示文字獨立一行（當有提示時） -->
+      <div v-if="!canGoNext && nextStepHint" class="mb-3 text-center md:hidden">
+        <span class="text-sm text-amber-400 animate-pulse">
+          👆 {{ nextStepHint }}
+        </span>
       </div>
 
-      <button
-        v-if="!isLastStep"
-        class="flex items-center gap-2 rounded-xl bg-gradient-to-r px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all md:px-6 md:py-3"
-        :class="themeClasses.nextBtn"
-        @click="handleNext"
-      >
-        <span>下一步</span>
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-        </svg>
-      </button>
-      <button
-        v-else
-        class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40 md:px-6 md:py-3"
-        @click="handleComplete"
-      >
-        <span>完成學習</span>
-        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-        </svg>
-      </button>
+      <!-- 主要控制區 -->
+      <div class="flex items-center justify-between gap-3">
+        <button
+          :disabled="!canGoPrev"
+          class="flex items-center gap-2 rounded-xl border border-slate-700 bg-slate-800 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-50 md:px-6 md:py-3"
+          @click="handlePrev"
+        >
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          <span class="hidden md:inline">上一步</span>
+        </button>
+
+        <!-- Mobile step indicator：當頁數超過 10 時只顯示數字 -->
+        <div v-if="totalSteps <= 10" class="flex gap-1 md:hidden">
+          <div
+            v-for="i in totalSteps"
+            :key="i"
+            class="h-1.5 rounded-full transition-all duration-300"
+            :class="
+              i - 1 === currentStep
+                ? `w-4 ${themeClasses.stepDot}`
+                : i - 1 < currentStep
+                  ? `w-1.5 ${themeClasses.stepDotDone}`
+                  : 'w-1.5 bg-slate-600'
+            "
+          ></div>
+        </div>
+        <!-- 頁數超過 10 時，手機版顯示簡化的進度條 -->
+        <div v-else class="md:hidden">
+          <div class="h-1.5 w-24 overflow-hidden rounded-full bg-slate-700">
+            <div
+              class="h-full rounded-full transition-all duration-300"
+              :class="themeClasses.stepDot"
+              :style="{ width: `${((currentStep + 1) / totalSteps) * 100}%` }"
+            ></div>
+          </div>
+        </div>
+
+        <div v-if="!isLastStep" class="flex items-center gap-3">
+          <!-- 提示文字（桌面版：當無法下一步時顯示） -->
+          <span v-if="!canGoNext && nextStepHint" class="hidden text-sm text-amber-400 animate-pulse md:inline">
+            👆 {{ nextStepHint }}
+          </span>
+          <button
+            :disabled="!canGoNext"
+            class="flex items-center gap-2 rounded-xl bg-gradient-to-r px-4 py-2.5 text-sm font-bold text-white shadow-lg transition-all md:px-6 md:py-3 disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none"
+            :class="themeClasses.nextBtn"
+            @click="handleNext"
+          >
+            <span>下一步</span>
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </div>
+        <button
+          v-else
+          class="flex items-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 px-4 py-2.5 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-emerald-500/40 md:px-6 md:py-3"
+          @click="handleComplete"
+        >
+          <span>完成學習</span>
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+        </button>
+      </div>
     </div>
   </div>
 </template>

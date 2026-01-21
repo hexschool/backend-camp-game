@@ -11,11 +11,32 @@ import InteractiveSlideModal from '../components/InteractiveSlideModal.vue'
 
 const router = useRouter()
 
-// 可用的互動簡報列表
+// 可用的互動簡報列表（依照 Day 排序）
 const slides = [
+  // Day 2
   { id: 'git-intro', title: 'Day 2｜Git 互動實驗室：Repository 概念', description: '教導 Git Repository 的基本概念，包含 git init、Working Directory 和 .git 隱藏資料夾' },
+  // Day 3
   { id: 'architecture-intro', title: 'Day 3｜系統架構入門：前端、後端、資料庫', description: '用電商購物流程說明三層架構，展示前端 → 後端 → 資料庫的資料流向' },
   { id: 'docker-intro', title: 'Day 3｜Docker 互動實驗室：容器化概念', description: '解釋 Docker 解決的問題，用貨櫃比喻容器，展示 LiveFit 的 3 個容器服務' },
+  // Day 4
+  { id: 'static-dynamic', title: 'Day 4｜靜態與動態網站比較', description: '比較靜態網站和動態網站的差異，說明後端處理資料的流程' },
+  { id: 'coach-backend', title: 'Day 4｜後端角色說明', description: '海克絲說明後端工程師的角色定位與日常工作' },
+  // Day 5
+  { id: 'drag-sort', title: 'Day 5｜拖曳排序：HTTP 請求流程', description: '透過拖曳排序互動，學習 HTTP 請求從瀏覽器到伺服器的完整流程' },
+  { id: 'network-request', title: 'Day 5｜網路請求視覺化', description: '視覺化展示網路請求的過程，包含 DNS 查詢、TCP 連線等步驟' },
+  { id: 'api-intro', title: 'Day 5｜API 基礎概念', description: '介紹 API 的基本概念，用餐廳點餐比喻說明 API 的運作方式' },
+  { id: 'api-demo', title: 'Day 5｜API 實際操作示範', description: '實際操作 API 請求，體驗 GET、POST 等 HTTP 方法' },
+  { id: 'third-party', title: 'Day 5｜第三方 API 服務', description: '介紹第三方 API 服務，如何整合外部服務到自己的應用程式' },
+  // Day 6
+  { id: 'table-design', title: 'Day 6｜資料表設計入門', description: '從 Excel 到資料庫的正規化概念，包含主鍵、外來鍵、資料型態、正規化動畫展示' },
+  { id: 'livefit-database', title: 'Day 6｜LiveFit 資料庫探險', description: '用 LiveFit 業務流程認識 4 張資料表：CREDIT_PACKAGE、SKILL、USER、CREDIT_PURCHASE' },
+  // Day 7
+  { id: 'database-access', title: 'Day 7｜資料庫操作方式', description: '破除迷思！認識兩種資料庫操作方式：後端程式 vs 管理工具（DBeaver）' },
+  { id: 'sql-basics', title: 'Day 7｜SQL 語法基礎', description: '學習 SQL 六大天王：SELECT、FROM、WHERE（查詢）+ INSERT、UPDATE、DELETE（操作）' },
+  { id: 'sql-practice', title: 'Day 7｜SQL 練習場', description: '透過點擊拼湊 SQL 語法，練習 INSERT、UPDATE、DELETE 操作' },
+  // Day 8
+  { id: 'jwt-intro', title: 'Day 8｜JWT 通行證：用餐廳號碼牌理解身份驗證', description: '用餐廳預約號碼牌的比喻，理解 JWT 如何讓伺服器記住你是誰' },
+  { id: 'jwt-storage', title: 'Day 8｜JWT 存放位置：瀏覽器的儲物櫃', description: '用 Chrome DevTools 實際看看 JWT 存在哪裡，以 Facebook 登入為例' },
 ]
 
 // 當前預覽的簡報
